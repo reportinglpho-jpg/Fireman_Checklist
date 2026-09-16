@@ -394,7 +394,10 @@
 
         <!-- ส่วนแสดงข้อมูลเมื่อสแกนสำเร็จ -->
         <div id="device-info-container" class="custom-card p-4 d-none">
-            <h5 class="fw-bold border-bottom pb-2 mb-3 text-primary"><i class="fa-solid fa-tags me-2"></i>ข้อมูลอุปกรณ์</h5>
+            <div class="d-flex justify-content-between align-items-center border-bottom pb-2 mb-3">
+                <h5 class="fw-bold m-0 text-primary"><i class="fa-solid fa-tags me-2"></i>ข้อมูลอุปกรณ์</h5>
+                <button type="button" class="btn-close" onclick="resetStatusPage()" aria-label="Close" title="ปิด"></button>
+            </div>
             <div class="row mb-4" id="device-details">
                 <!-- ข้อมูลจะถูก render ที่นี่ผ่าน JS -->
             </div>
@@ -657,11 +660,22 @@
                         <input type="text" id="user-position" class="form-control rounded-3">
                     </div>
                     <div class="col-md-6 mb-3">
-                        <label class="form-label small fw-semibold">สิทธิ์การใช้งาน</label>
+                        <label class="form-label small fw-semibold">ประเภทผู้ใช้งาน</label>
                         <select id="user-role" class="form-select rounded-3">
                             <option value="user">User (ตรวจเช็คได้อย่างเดียว)</option>
                             <option value="admin">Admin (ผู้ดูแลระบบ)</option>
                         </select>
+                    </div>
+                </div>
+                <div class="mb-3 border rounded p-3 bg-light">
+                    <label class="form-label small fw-bold text-dark border-bottom pb-1 mb-2 d-block">กำหนดสิทธิ์</label>
+                    <div class="form-check mb-1">
+                        <input class="form-check-input" type="checkbox" id="user-perm-delete">
+                        <label class="form-check-label small" for="user-perm-delete">สามารถลบ/ล้างประวัติการตรวจได้</label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="user-perm-edit">
+                        <label class="form-check-label small" for="user-perm-edit">สามารถแก้ไขผล/สถานะ/วันที่การตรวจได้</label>
                     </div>
                 </div>
             </div>
@@ -694,22 +708,6 @@
                 <div class="mb-3">
                     <label class="form-label small fw-semibold">ตำแหน่ง</label>
                     <input type="text" id="emp-position" class="form-control rounded-3">
-                </div>
-                <!-- เพิ่มรหัสผ่านและสิทธิ์สำหรับพนักงาน -->
-                <div class="mb-3">
-                    <label class="form-label small fw-semibold text-danger">รหัสผ่าน (สำหรับการอนุมัติลบ/แก้ไข)</label>
-                    <input type="text" id="emp-pass" class="form-control rounded-3" placeholder="ตั้งรหัสผ่านสำหรับพนักงานคนนี้">
-                </div>
-                <div class="mb-3 border rounded p-3 bg-light">
-                    <label class="form-label small fw-bold text-dark border-bottom pb-1 mb-2 d-block">กำหนดสิทธิ์การจัดการ (สำหรับพนักงาน)</label>
-                    <div class="form-check mb-1">
-                        <input class="form-check-input" type="checkbox" id="emp-perm-delete">
-                        <label class="form-check-label small" for="emp-perm-delete">สามารถลบ/ล้างประวัติการตรวจได้</label>
-                    </div>
-                    <div class="form-check">
-                        <input class="form-check-input" type="checkbox" id="emp-perm-edit">
-                        <label class="form-check-label small" for="emp-perm-edit">สามารถแก้ไขผล/สถานะ/วันที่การตรวจได้</label>
-                    </div>
                 </div>
             </div>
             <div class="modal-footer border-0 pt-0">
@@ -803,8 +801,8 @@
         const { value: formValues } = await Swal.fire({
             title: 'ยืนยันสิทธิ์ผู้ดูแล',
             html:
-                '<p class="text-muted small mb-3">กรุณาใส่รหัส Admin หรือรหัสพนักงานที่ได้รับสิทธิ์</p>' +
-                '<input id="swal-auth-user" class="swal2-input mt-0 mb-3 w-100 mx-0" placeholder="รหัสผู้ใช้งาน / รหัสพนักงาน" style="font-size:1rem;">' +
+                '<p class="text-muted small mb-3">กรุณาใส่รหัส Admin หรือรหัสผู้ใช้งานที่ได้รับสิทธิ์</p>' +
+                '<input id="swal-auth-user" class="swal2-input mt-0 mb-3 w-100 mx-0" placeholder="รหัสผู้ใช้งาน (Username / ID)" style="font-size:1rem;">' +
                 '<input id="swal-auth-pass" type="password" class="swal2-input m-0 w-100 mx-0" placeholder="รหัสผ่าน" style="font-size:1rem;">',
             focusConfirm: false,
             showCancelButton: true,
@@ -826,14 +824,12 @@
 
         const { user, pass } = formValues;
 
-        const adminUser = mockUsers.find(u => (u.Username === user || u.ID === user) && u.Password === pass && u.Role === 'admin');
-        if (adminUser) return true;
-
-        const emp = mockEmployees.find(e => e.EmpID === user && e.Password === pass);
-        if (emp) {
-            if (requiredPermission === 'CanDeleteHistory' && emp.CanDeleteHistory) return true;
-            if (requiredPermission === 'CanEditStatus' && emp.CanEditStatus) return true;
-            Swal.fire('ปฏิเสธการเข้าถึง', 'พนักงานรหัสนี้ไม่มีสิทธิ์ในการทำรายการนี้', 'error');
+        const userObj = mockUsers.find(u => (u.Username === user || u.ID === user) && u.Password === pass);
+        if (userObj) {
+            if (userObj.Role === 'admin') return true;
+            if (requiredPermission === 'CanDeleteHistory' && userObj.CanDeleteHistory) return true;
+            if (requiredPermission === 'CanEditStatus' && userObj.CanEditStatus) return true;
+            Swal.fire('ปฏิเสธการเข้าถึง', 'ผู้ใช้งานนี้ไม่มีสิทธิ์ในการทำรายการนี้', 'error');
             return false;
         }
 
@@ -1107,8 +1103,8 @@
                     <td>${h.Date}</td>
                     <td>${h.Time}</td>
                     <td class="fw-bold">
-                        <a href="javascript:void(0);" class="text-primary text-decoration-none" onclick="viewDeviceStatus('${h.DeviceID}')" title="คลิกเพื่อดูข้อมูลและตารางรายปี">
-                            ${h.DeviceID} <i class="fa-solid fa-arrow-up-right-from-square small ms-1"></i>
+                        <a href="javascript:void(0);" class="text-primary text-decoration-none" onclick="viewDeviceStatus('${h.DeviceID}')" title="คลิกเพื่อดูข้อมูลอุปกรณ์">
+                            ${h.DeviceID} <i class="fa-solid fa-window-restore small ms-1"></i>
                         </a>
                     </td>
                     <td>${h.DeviceType}</td>
@@ -1150,9 +1146,76 @@
     }
 
     function viewDeviceStatus(deviceId) {
-        showPage('status-page');
-        handleStatusScanResult(deviceId);
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+        const device = mockDevices.find(d => d.ID === deviceId);
+        if(!device) {
+            Swal.fire('ไม่พบอุปกรณ์', 'รหัสนี้ไม่มีในระบบ', 'error');
+            return;
+        }
+        const currentYear = new Date().getFullYear();
+        const monthNames = ["มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน", "พฤษภาคม", "มิถุนายน", "กรกฎาคม", "สิงหาคม", "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม"];
+        
+        let yearlyRows = '';
+        for(let m = 1; m <= 12; m++) {
+            const insp = mockInspections.find(i => i.DeviceID === device.ID && i.Month === m && i.Year === currentYear);
+            if(insp) {
+                const badgeClass = insp.Remarks === "ใช้งานได้" ? "bg-success" : (insp.Remarks === "ชำรุด" ? "bg-danger" : "bg-warning");
+                yearlyRows += `
+                    <tr>
+                        <td class="fw-bold text-dark">${m} (${monthNames[m-1]})</td>
+                        <td><span class="text-success"><i class="fa-solid fa-check me-1"></i> ตรวจแล้ว</span></td>
+                        <td>${insp.Inspector}</td>
+                        <td>${insp.Date}</td>
+                        <td><span class="badge ${badgeClass} px-2 py-1 rounded-pill">${insp.Remarks}</span></td>
+                    </tr>
+                `;
+            } else {
+                yearlyRows += `
+                    <tr>
+                        <td class="fw-bold text-dark">${m} (${monthNames[m-1]})</td>
+                        <td><span class="text-danger"><i class="fa-solid fa-xmark me-1"></i> ยังไม่ตรวจ</span></td>
+                        <td>-</td>
+                        <td>-</td>
+                        <td>-</td>
+                    </tr>
+                `;
+            }
+        }
+
+        Swal.fire({
+            title: `<i class="fa-solid fa-circle-info me-2 text-primary"></i> ข้อมูลสถานะอุปกรณ์ ${device.ID}`,
+            html: `
+                <div class="text-start fs-6 my-3">
+                    <div class="row g-2 mb-3 bg-light p-3 rounded-3 border">
+                        <div class="col-6"><b>รหัสอุปกรณ์:</b> ${device.ID}</div>
+                        <div class="col-6"><b>ประเภท:</b> ${device.Type}</div>
+                        <div class="col-6"><b>จุดติดตั้ง:</b> ${device.InstallPoint}</div>
+                        <div class="col-6"><b>ชั้น:</b> ${device.Floor}</div>
+                        <div class="col-6"><b>วันที่ซื้อ:</b> ${device.BuyDate || '-'}</div>
+                        <div class="col-6"><b>อายุการใช้งาน:</b> ${device.Lifespan || '-'} ปี</div>
+                        <div class="col-12 text-danger"><b>หมายเหตุ:</b> ${device.Remark || '-'}</div>
+                    </div>
+                    <h6 class="fw-bold text-success mb-2"><i class="fa-solid fa-calendar-check me-2"></i>ตารางการตรวจรายปี ${currentYear}</h6>
+                    <div class="table-responsive" style="max-height: 250px; overflow-y: auto;">
+                        <table class="table table-sm align-middle text-center small border mb-0">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>เดือน</th>
+                                    <th>สถานะ</th>
+                                    <th>ผู้ตรวจ</th>
+                                    <th>วันที่ตรวจ</th>
+                                    <th>ผลการตรวจ</th>
+                                </tr>
+                            </thead>
+                            <tbody>${yearlyRows}</tbody>
+                        </table>
+                    </div>
+                </div>
+            `,
+            width: '650px',
+            showCloseButton: true,
+            showConfirmButton: false,
+            focusConfirm: false
+        });
     }
 
     // ========================================================
@@ -1634,6 +1697,9 @@
         document.getElementById('user-password').value = "";
         document.getElementById('user-fullname').value = "";
         document.getElementById('user-position').value = "";
+        document.getElementById('user-role').value = "user";
+        document.getElementById('user-perm-delete').checked = false;
+        document.getElementById('user-perm-edit').checked = false;
         new bootstrap.Modal(document.getElementById('userModal')).show();
     }
 
@@ -1648,6 +1714,8 @@
         document.getElementById('user-fullname').value = u.Name;
         document.getElementById('user-position').value = u.Position;
         document.getElementById('user-role').value = u.Role;
+        document.getElementById('user-perm-delete').checked = u.CanDeleteHistory || false;
+        document.getElementById('user-perm-edit').checked = u.CanEditStatus || false;
 
         new bootstrap.Modal(document.getElementById('userModal')).show();
     }
@@ -1659,6 +1727,8 @@
         const fname = document.getElementById('user-fullname').value.trim();
         const pos = document.getElementById('user-position').value.trim();
         const role = document.getElementById('user-role').value;
+        const canDel = document.getElementById('user-perm-delete').checked;
+        const canEdit = document.getElementById('user-perm-edit').checked;
 
         if(!uname) return Swal.fire('เตือน', 'กรุณาระบุ Username', 'warning');
 
@@ -1676,10 +1746,12 @@
                 mockUsers[idx].Username = uname;
                 mockUsers[idx].Name = fname;
                 mockUsers[idx].Position = pos;
+                mockUsers[idx].CanDeleteHistory = canDel;
+                mockUsers[idx].CanEditStatus = canEdit;
             }
         } else {
             const newId = "U00" + (mockUsers.length + 1);
-            mockUsers.push({ ID: newId, Username: uname, Password: pass, Role: role, Name: fname, Position: pos, Phone: "-" });
+            mockUsers.push({ ID: newId, Username: uname, Password: pass, Role: role, Name: fname, Position: pos, Phone: "-", CanDeleteHistory: canDel, CanEditStatus: canEdit });
         }
 
         saveToLocalStorage();
@@ -1728,9 +1800,6 @@
         document.getElementById('emp-id').value = "";
         document.getElementById('emp-name').value = "";
         document.getElementById('emp-position').value = "";
-        document.getElementById('emp-pass').value = "";
-        document.getElementById('emp-perm-delete').checked = false;
-        document.getElementById('emp-perm-edit').checked = false;
         new bootstrap.Modal(document.getElementById('employeeModal')).show();
     }
 
@@ -1742,9 +1811,6 @@
         document.getElementById('emp-id').value = e.EmpID;
         document.getElementById('emp-name').value = e.Name;
         document.getElementById('emp-position').value = e.Position;
-        document.getElementById('emp-pass').value = e.Password || "";
-        document.getElementById('emp-perm-delete').checked = e.CanDeleteHistory || false;
-        document.getElementById('emp-perm-edit').checked = e.CanEditStatus || false;
         new bootstrap.Modal(document.getElementById('employeeModal')).show();
     }
 
@@ -1753,13 +1819,10 @@
         const id = document.getElementById('emp-id').value.trim();
         const name = document.getElementById('emp-name').value.trim();
         const pos = document.getElementById('emp-position').value.trim();
-        const pass = document.getElementById('emp-pass').value.trim();
-        const canDel = document.getElementById('emp-perm-delete').checked;
-        const canEdit = document.getElementById('emp-perm-edit').checked;
 
         if(!id || !name) return Swal.fire('เตือน', 'กรุณาระบุรหัสและชื่อพนักงานให้ครบถ้วน', 'warning');
 
-        const empData = { EmpID: id, Name: name, Position: pos, Password: pass, CanDeleteHistory: canDel, CanEditStatus: canEdit };
+        const empData = { EmpID: id, Name: name, Position: pos };
 
         if(origId) {
             const idx = mockEmployees.findIndex(x => x.EmpID === origId);
