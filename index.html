@@ -229,6 +229,8 @@
             box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
         }
 
+        .cursor-pointer { cursor: pointer; }
+
         @media print {
             .no-print { display: none !important; }
             body { background: white; }
@@ -431,8 +433,13 @@
         <!-- Tab เมนูจัดการ -->
         <ul class="nav nav-pills mb-4 gap-2" id="pills-tab" role="tablist">
             <li class="nav-item" role="presentation">
-                <button class="nav-link active fw-medium" id="tab-devices-btn" data-bs-toggle="pill" data-bs-target="#pills-devices" type="button" role="tab" aria-controls="pills-devices" aria-selected="true">
-                    <i class="fa-solid fa-boxes-stacked me-2"></i>จัดการอุปกรณ์
+                <button class="nav-link active fw-medium" id="tab-extinguisher-btn" data-bs-toggle="pill" data-bs-target="#pills-extinguisher" type="button" role="tab" aria-controls="pills-extinguisher" aria-selected="true">
+                    <i class="fa-solid fa-fire-extinguisher me-2"></i>จัดการอุปกรณ์ถังดับเพลิง
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link fw-medium" id="tab-fhc-btn" data-bs-toggle="pill" data-bs-target="#pills-fhc" type="button" role="tab" aria-controls="pills-fhc" aria-selected="false">
+                    <i class="fa-solid fa-droplet me-2"></i>จัดการอุปกรณ์ตู้ FHC
                 </button>
             </li>
             <li class="nav-item" role="presentation">
@@ -448,35 +455,59 @@
         </ul>
 
         <div class="tab-content" id="pills-tabContent">
-            <!-- แท็บ 1: จัดการอุปกรณ์ -->
-            <div class="tab-pane fade show active" id="pills-devices" role="tabpanel" aria-labelledby="tab-devices-btn">
+            <!-- แท็บ 1: จัดการอุปกรณ์ถังดับเพลิง -->
+            <div class="tab-pane fade show active" id="pills-extinguisher" role="tabpanel" aria-labelledby="tab-extinguisher-btn">
                 <div class="custom-card p-4">
                     <div class="d-flex justify-content-between align-items-center mb-4">
-                        <h4 class="fw-bold m-0"><i class="fa-solid fa-fire-extinguisher me-2 text-danger"></i> รายการอุปกรณ์ทั้งหมด</h4>
-                        <button class="btn btn-danger rounded-3 px-3 shadow-sm" onclick="openAddDeviceModal()">
-                            <i class="fa-solid fa-plus me-1"></i> เพิ่มอุปกรณ์ใหม่
+                        <h4 class="fw-bold m-0"><i class="fa-solid fa-fire-extinguisher me-2 text-danger"></i> รายการอุปกรณ์ถังดับเพลิง</h4>
+                        <button class="btn btn-danger rounded-3 px-3 shadow-sm" onclick="openAddDeviceModal('ถังดับเพลิง')">
+                            <i class="fa-solid fa-plus me-1"></i> เพิ่มถังดับเพลิงใหม่
                         </button>
                     </div>
-
                     <div class="table-responsive">
                         <table class="table align-middle text-center">
                             <thead>
                                 <tr>
                                     <th style="width: 80px;">QR Code</th>
-                                    <th>รหัสถัง/ตู้</th>
-                                    <th>ประเภท</th>
+                                    <th>รหัสถัง</th>
                                     <th>จุดติดตั้ง</th>
                                     <th>ชั้น</th>
-                                    <th style="width: 170px;">จัดการ</th>
+                                    <th style="width: 220px;">จัดการ</th>
                                 </tr>
                             </thead>
-                            <tbody id="device-table-body"></tbody>
+                            <tbody id="extinguisher-table-body"></tbody>
                         </table>
                     </div>
                 </div>
             </div>
 
-            <!-- แท็บ 2: จัดการผู้ใช้งาน -->
+            <!-- แท็บ 2: จัดการอุปกรณ์ตู้ FHC -->
+            <div class="tab-pane fade" id="pills-fhc" role="tabpanel" aria-labelledby="tab-fhc-btn">
+                <div class="custom-card p-4">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h4 class="fw-bold m-0"><i class="fa-solid fa-droplet me-2 text-primary"></i> รายการอุปกรณ์ตู้ Fire Hose (FHC)</h4>
+                        <button class="btn btn-primary rounded-3 px-3 shadow-sm" onclick="openAddDeviceModal('ตู้ Fire Hose')">
+                            <i class="fa-solid fa-plus me-1"></i> เพิ่มตู้ FHC ใหม่
+                        </button>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table align-middle text-center">
+                            <thead>
+                                <tr>
+                                    <th style="width: 80px;">QR Code</th>
+                                    <th>รหัสตู้</th>
+                                    <th>จุดติดตั้ง</th>
+                                    <th>ชั้น</th>
+                                    <th style="width: 220px;">จัดการ</th>
+                                </tr>
+                            </thead>
+                            <tbody id="fhc-table-body"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- แท็บ 3: จัดการผู้ใช้งาน -->
             <div class="tab-pane fade" id="pills-users" role="tabpanel" aria-labelledby="tab-users-btn">
                 <div class="custom-card p-4">
                     <div class="d-flex justify-content-between align-items-center mb-4">
@@ -504,7 +535,7 @@
                 </div>
             </div>
 
-            <!-- แท็บ 3: จัดการพนักงาน -->
+            <!-- แท็บ 4: จัดการพนักงาน -->
             <div class="tab-pane fade" id="pills-employees" role="tabpanel" aria-labelledby="tab-employees-btn">
                 <div class="custom-card p-4">
                     <div class="d-flex justify-content-between align-items-center mb-4">
@@ -547,13 +578,13 @@
 
                     <div class="text-start mb-3">
                         <label class="form-label small text-muted fw-semibold">ชื่อผู้ใช้ (Username)</label>
-                        <input type="text" id="login-username" class="form-control rounded-3" placeholder="admin" autocomplete="new-password" required>
+                        <input type="text" id="login-username" class="form-control rounded-3" autocomplete="new-password" required>
                     </div>
 
                     <div class="text-start mb-4">
                         <label class="form-label small text-muted fw-semibold">รหัสผ่าน (Password)</label>
                         <div class="input-group">
-                            <input type="password" id="login-password" class="form-control rounded-start-3" placeholder="••••••••" autocomplete="new-password" required>
+                            <input type="password" id="login-password" class="form-control rounded-start-3" autocomplete="new-password" required>
                             <button class="btn btn-outline-secondary rounded-end-3" type="button" id="btn-eye-password">
                                 <i class="fa-solid fa-eye" id="eye-icon"></i>
                             </button>
@@ -587,11 +618,69 @@
                 
                 <div class="mb-3">
                     <label class="form-label small fw-semibold">ประเภทอุปกรณ์</label>
-                    <select id="dev-type" class="form-select rounded-3" onchange="updateDevicePrefix()">
+                    <select id="dev-type" class="form-select rounded-3 bg-light" disabled onchange="toggleExtinguisherFields()">
                         <option value="ถังดับเพลิง">ถังดับเพลิง</option>
                         <option value="ตู้ Fire Hose">ตู้ Fire Hose</option>
                     </select>
                 </div>
+
+                <!-- ส่วนข้อมูลเพิ่มเติมเฉพาะถังดับเพลิง -->
+                <div id="extinguisher-extra-fields">
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold">ชนิดของถังดับเพลิง</label>
+                        <select id="dev-chemical-type" class="form-select rounded-3">
+                            <option value="">-- เลือกชนิดถังดับเพลิง --</option>
+                            <option value="ABFFC">ABFFC</option>
+                            <option value="Co2">Co2</option>
+                            <option value="Foam">Foam</option>
+                            <option value="Dry Chemical">Dry Chemical</option>
+                            <option value="BF2000">BF2000</option>
+                            <option value="FireAde2000">FireAde2000</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold d-block">ประเภทของไฟที่ดับได้ (เลือกได้หลายข้อ)</label>
+                        <div class="d-flex flex-wrap gap-2 p-2 border rounded-3 bg-light">
+                            <!-- Class A -->
+                            <div class="form-check d-flex align-items-center gap-1 me-2">
+                                <input class="form-check-input" type="checkbox" value="A" id="class-a">
+                                <label class="form-check-label small d-flex align-items-center gap-1 cursor-pointer" for="class-a">
+                                    <img src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='15' fill='%231b5e20'/><text x='70' y='38' font-size='24' font-weight='bold' fill='%23ffffff' text-anchor='middle'>A</text><path d='M20 75 h30 v-32 h-30 z M15 38 h40 v-6 h-40 z' fill='%23ffffff'/></svg>" style="width:24px; height:24px; border-radius:4px;"> 1. ประเภท A
+                                </label>
+                            </div>
+                            <!-- Class B -->
+                            <div class="form-check d-flex align-items-center gap-1 me-2">
+                                <input class="form-check-input" type="checkbox" value="B" id="class-b">
+                                <label class="form-check-label small d-flex align-items-center gap-1 cursor-pointer" for="class-b">
+                                    <img src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='15' fill='%23b71c1c'/><text x='70' y='38' font-size='24' font-weight='bold' fill='%23ffffff' text-anchor='middle'>B</text><path d='M22 45 h25 v30 h-25 z M28 32 h13 v13 h-13 z' fill='%23ffffff'/></svg>" style="width:24px; height:24px; border-radius:4px;"> 2. ประเภท B
+                                </label>
+                            </div>
+                            <!-- Class C -->
+                            <div class="form-check d-flex align-items-center gap-1 me-2">
+                                <input class="form-check-input" type="checkbox" value="C" id="class-c">
+                                <label class="form-check-label small d-flex align-items-center gap-1 cursor-pointer" for="class-c">
+                                    <img src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='15' fill='%230d47a1'/><text x='70' y='38' font-size='24' font-weight='bold' fill='%23ffffff' text-anchor='middle'>C</text><path d='M18 48 h22 v14 h-22 z M40 52 h18 v6 h-18 z' fill='%23ffffff'/></svg>" style="width:24px; height:24px; border-radius:4px;"> 3. ประเภท C
+                                </label>
+                            </div>
+                            <!-- Class D -->
+                            <div class="form-check d-flex align-items-center gap-1 me-2">
+                                <input class="form-check-input" type="checkbox" value="D" id="class-d">
+                                <label class="form-check-label small d-flex align-items-center gap-1 cursor-pointer" for="class-d">
+                                    <img src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='15' fill='%23f57f17'/><text x='50' y='65' font-size='42' font-weight='bold' fill='%23ffffff' text-anchor='middle'>D</text></svg>" style="width:24px; height:24px; border-radius:4px;"> 4. ประเภท D
+                                </label>
+                            </div>
+                            <!-- Class K -->
+                            <div class="form-check d-flex align-items-center gap-1 me-2">
+                                <input class="form-check-input" type="checkbox" value="K" id="class-k">
+                                <label class="form-check-label small d-flex align-items-center gap-1 cursor-pointer" for="class-k">
+                                    <img src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='15' fill='%23212121'/><text x='50' y='65' font-size='42' font-weight='bold' fill='%23ffffff' text-anchor='middle'>K</text></svg>" style="width:24px; height:24px; border-radius:4px;"> 5. ประเภท K
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="mb-3">
                     <label class="form-label small fw-semibold">รหัสอุปกรณ์ (เช่น CL-001, FHC-001)</label>
                     <input type="text" id="dev-id" class="form-control rounded-3" placeholder="รหัสอุปกรณ์">
@@ -599,21 +688,44 @@
                 <div class="row">
                     <div class="col-md-8 mb-3">
                         <label class="form-label small fw-semibold">จุดติดตั้ง</label>
-                        <input type="text" id="dev-point" class="form-control rounded-3" placeholder="เช่น หน้าห้องน้ำชั้น 1">
+                        <input type="text" id="dev-point" class="form-control rounded-3">
                     </div>
                     <div class="col-md-4 mb-3">
                         <label class="form-label small fw-semibold">ชั้น</label>
-                        <input type="text" id="dev-floor" class="form-control rounded-3" placeholder="1">
+                        <input type="text" id="dev-floor" class="form-control rounded-3">
                     </div>
                 </div>
                 <div class="row">
                     <div class="col-md-6 mb-3">
-                        <label class="form-label small fw-semibold">วันที่สั่งซื้อ</label>
-                        <input type="date" id="dev-buydate" class="form-control rounded-3">
+                        <label class="form-label small fw-semibold">ปีที่สั่งซื้อ</label>
+                        <select id="dev-buydate" class="form-select rounded-3">
+                            <option value="">-- เลือกปี พ.ศ. --</option>
+                            <option value="2555">2555</option>
+                            <option value="2556">2556</option>
+                            <option value="2557">2557</option>
+                            <option value="2558">2558</option>
+                            <option value="2559">2559</option>
+                            <option value="2560">2560</option>
+                            <option value="2561">2561</option>
+                            <option value="2562">2562</option>
+                            <option value="2563">2563</option>
+                            <option value="2564">2564</option>
+                            <option value="2565">2565</option>
+                            <option value="2566">2566</option>
+                            <option value="2567">2567</option>
+                            <option value="2568">2568</option>
+                            <option value="2569">2569</option>
+                            <option value="2570">2570</option>
+                            <option value="2571">2571</option>
+                            <option value="2572">2572</option>
+                            <option value="2573">2573</option>
+                            <option value="2574">2574</option>
+                            <option value="2575">2575</option>
+                        </select>
                     </div>
                     <div class="col-md-6 mb-3">
                         <label class="form-label small fw-semibold">อายุการใช้งาน (ปี)</label>
-                        <input type="number" id="dev-lifespan" class="form-control rounded-3" value="5">
+                        <input type="number" id="dev-lifespan" class="form-control rounded-3">
                     </div>
                 </div>
                 <!-- เพิ่มช่องหมายเหตุ -->
@@ -763,6 +875,15 @@
     let mockEmployees = [];
     let mockInspections = [];
 
+    // รูปไอคอน SVG ประจำประเภทไฟ
+    const fireClassIcons = {
+        A: "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='15' fill='%231b5e20'/><text x='70' y='38' font-size='24' font-weight='bold' fill='%23ffffff' text-anchor='middle'>A</text><path d='M20 75 h30 v-32 h-30 z M15 38 h40 v-6 h-40 z' fill='%23ffffff'/></svg>",
+        B: "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='15' fill='%23b71c1c'/><text x='70' y='38' font-size='24' font-weight='bold' fill='%23ffffff' text-anchor='middle'>B</text><path d='M22 45 h25 v30 h-25 z M28 32 h13 v13 h-13 z' fill='%23ffffff'/></svg>",
+        C: "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='15' fill='%230d47a1'/><text x='70' y='38' font-size='24' font-weight='bold' fill='%23ffffff' text-anchor='middle'>C</text><path d='M18 48 h22 v14 h-22 z M40 52 h18 v6 h-18 z' fill='%23ffffff'/></svg>",
+        D: "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='15' fill='%23f57f17'/><text x='50' y='65' font-size='42' font-weight='bold' fill='%23ffffff' text-anchor='middle'>D</text></svg>",
+        K: "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='15' fill='%23212121'/><text x='50' y='65' font-size='42' font-weight='bold' fill='%23ffffff' text-anchor='middle'>K</text></svg>"
+    };
+
     // โหลดข้อมูลทั้งหมดจาก Firebase เมื่อเปิดหน้าเว็บ
     function loadFromFirebase() {
         db.ref('/').on('value', (snapshot) => {
@@ -778,7 +899,7 @@
                 mockUsers[adminIdx].Password = "20033457";
             }
 
-            // รีเฟรช UI ถ่าหน้าต่างนั้นเปิดอยู่
+            // รีเฟรช UI ถ้าหน้าต่างนั้นเปิดอยู่
             if(document.getElementById('settings-page').classList.contains('active')) {
                 loadDevices();
                 loadUsers();
@@ -1202,6 +1323,20 @@
             }
         }
 
+        let extraDetailHtml = '';
+        if (device.Type === 'ถังดับเพลิง') {
+            let classBadges = (device.FireClasses || []).map(c => `
+                <span class="badge bg-light text-dark border me-1 align-items-center">
+                    <img src="${fireClassIcons[c]}" style="width:16px; height:16px; margin-right:4px;"> ${c}
+                </span>
+            `).join('') || '-';
+
+            extraDetailHtml = `
+                <div class="col-6"><b>ชนิดถัง:</b> ${device.ChemicalType || '-'}</div>
+                <div class="col-6"><b>ประเภทไฟ:</b> ${classBadges}</div>
+            `;
+        }
+
         Swal.fire({
             title: `<i class="fa-solid fa-circle-info me-2 text-primary"></i> ข้อมูลสถานะอุปกรณ์ ${device.ID}`,
             html: `
@@ -1209,9 +1344,10 @@
                     <div class="row g-2 mb-3 bg-light p-3 rounded-3 border">
                         <div class="col-6"><b>รหัสอุปกรณ์:</b> ${device.ID}</div>
                         <div class="col-6"><b>ประเภท:</b> ${device.Type}</div>
+                        ${extraDetailHtml}
                         <div class="col-6"><b>จุดติดตั้ง:</b> ${device.InstallPoint}</div>
                         <div class="col-6"><b>ชั้น:</b> ${device.Floor}</div>
-                        <div class="col-6"><b>วันที่ซื้อ:</b> ${device.BuyDate || '-'}</div>
+                        <div class="col-6"><b>ปีที่สั่งซื้อ:</b> ${device.BuyDate || '-'}</div>
                         <div class="col-6"><b>อายุการใช้งาน:</b> ${device.Lifespan || '-'} ปี</div>
                         <div class="col-12 text-danger"><b>หมายเหตุ:</b> ${device.Remark || '-'}</div>
                     </div>
@@ -1280,12 +1416,27 @@
         }
 
         document.getElementById('device-info-container').classList.remove('d-none');
+
+        let extraDetailHtml = '';
+        if (device.Type === 'ถังดับเพลิง') {
+            let classBadges = (device.FireClasses || []).map(c => `
+                <span class="badge bg-light text-dark border me-1 align-items-center">
+                    <img src="${fireClassIcons[c]}" style="width:16px; height:16px; margin-right:4px;"> ${c}
+                </span>
+            `).join('') || '-';
+
+            extraDetailHtml = `
+                <div class="col-md-4 mb-2"><span class="text-muted small">ชนิดถังดับเพลิง</span><br><b class="text-dark">${device.ChemicalType || '-'}</b></div>
+                <div class="col-md-4 mb-2"><span class="text-muted small">ประเภทไฟที่ดับได้</span><br>${classBadges}</div>
+            `;
+        }
         
         document.getElementById('device-details').innerHTML = `
             <div class="col-md-4 mb-2"><span class="text-muted small">รหัสอุปกรณ์</span><br><b class="fs-5 text-dark">${device.ID}</b></div>
             <div class="col-md-4 mb-2"><span class="text-muted small">ประเภทอุปกรณ์</span><br><b class="text-dark">${device.Type}</b></div>
+            ${extraDetailHtml}
             <div class="col-md-4 mb-2"><span class="text-muted small">จุดติดตั้ง</span><br><b class="text-dark">${device.InstallPoint} (ชั้น ${device.Floor})</b></div>
-            <div class="col-md-4 mb-2"><span class="text-muted small">วันที่สั่งซื้อ</span><br><b class="text-dark">${device.BuyDate || '-'}</b></div>
+            <div class="col-md-4 mb-2"><span class="text-muted small">ปีที่สั่งซื้อ</span><br><b class="text-dark">${device.BuyDate || '-'}</b></div>
             <div class="col-md-4 mb-2"><span class="text-muted small">อายุการใช้งาน</span><br><b class="text-dark">${device.Lifespan || '-'} ปี</b></div>
             <div class="col-md-4 mb-2"><span class="text-muted small">หมายเหตุ</span><br><b class="text-danger">${device.Remark || '-'}</b></div>
         `;
@@ -1493,26 +1644,37 @@
     }
 
     // ========================================================
-    // SETTINGS: DEVICE MANAGEMENT
+    // SETTINGS: DEVICE MANAGEMENT (จัดการอุปกรณ์)
     // ========================================================
+    function toggleExtinguisherFields() {
+        const type = document.getElementById('dev-type').value;
+        const extraFields = document.getElementById('extinguisher-extra-fields');
+        if (type === 'ถังดับเพลิง') {
+            extraFields.style.display = 'block';
+        } else {
+            extraFields.style.display = 'none';
+        }
+    }
+
     function loadDevices() {
-        const tbody = document.getElementById('device-table-body');
-        tbody.innerHTML = '';
+        const extTbody = document.getElementById('extinguisher-table-body');
+        const fhcTbody = document.getElementById('fhc-table-body');
+        if(extTbody) extTbody.innerHTML = '';
+        if(fhcTbody) fhcTbody.innerHTML = '';
 
         mockDevices.forEach(d => {
             const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${d.ID}`;
             
-            tbody.innerHTML += `
+            const rowHtml = `
                 <tr>
                     <td>
                         <img src="${qrUrl}" class="qr-thumb" onclick="previewQR('${d.ID}')" title="คลิกเพื่อดูรูปใหญ่">
                     </td>
                     <td class="fw-bold">${d.ID}</td>
-                    <td><span class="badge ${d.Type === 'ถังดับเพลิง' ? 'bg-danger':'bg-primary'} px-2 py-1 rounded-pill">${d.Type}</span></td>
                     <td>${d.InstallPoint}</td>
                     <td>${d.Floor}</td>
                     <td>
-                        <div class="d-flex justify-content-center gap-1">
+                        <div class="d-flex justify-content-center align-items-center gap-1 flex-nowrap">
                             <button class="btn btn-action btn-outline-success" onclick="viewDeviceInfo('${d.ID}')" title="ดูข้อมูลอุปกรณ์">
                                 <i class="fa-solid fa-eye"></i>
                             </button>
@@ -1532,6 +1694,13 @@
                     </td>
                 </tr>
             `;
+            
+            // แยกข้อมูลตาราง
+            if (d.Type === 'ถังดับเพลิง') {
+                if(extTbody) extTbody.innerHTML += rowHtml;
+            } else {
+                if(fhcTbody) fhcTbody.innerHTML += rowHtml;
+            }
         });
     }
 
@@ -1539,15 +1708,30 @@
         const d = mockDevices.find(x => x.ID === id);
         if(!d) return;
 
+        let extraHtml = '';
+        if (d.Type === 'ถังดับเพลิง') {
+            let classBadges = (d.FireClasses || []).map(c => `
+                <span class="badge bg-light text-dark border me-1 align-items-center">
+                    <img src="${fireClassIcons[c]}" style="width:16px; height:16px; margin-right:4px;"> ${c}
+                </span>
+            `).join('') || '-';
+
+            extraHtml = `
+                <p class="mb-2"><b>ชนิดถังดับเพลิง:</b> ${d.ChemicalType || '-'}</p>
+                <p class="mb-2"><b>ประเภทไฟที่ดับได้:</b> ${classBadges}</p>
+            `;
+        }
+
         Swal.fire({
             title: `<i class="fa-solid fa-circle-info me-2 text-primary"></i> ข้อมูลอุปกรณ์ ${d.ID}`,
             html: `
                 <div class="text-start fs-6 my-3 bg-light p-3 rounded-3 border">
                     <p class="mb-2"><b>รหัสอุปกรณ์:</b> ${d.ID}</p>
                     <p class="mb-2"><b>ประเภท:</b> ${d.Type}</p>
+                    ${extraHtml}
                     <p class="mb-2"><b>จุดติดตั้ง:</b> ${d.InstallPoint}</p>
                     <p class="mb-2"><b>ชั้น:</b> ${d.Floor}</p>
-                    <p class="mb-2"><b>วันที่ซื้อ:</b> ${d.BuyDate || '-'}</p>
+                    <p class="mb-2"><b>ปีที่สั่งซื้อ:</b> ${d.BuyDate || '-'}</p>
                     <p class="mb-2"><b>อายุการใช้งาน:</b> ${d.Lifespan || '-'} ปี</p>
                     <p class="text-danger mb-0"><b>หมายเหตุ:</b> ${d.Remark || '-'}</p>
                 </div>
@@ -1623,25 +1807,28 @@
         }
     }
 
-    function updateDevicePrefix() {
-        const devIdInput = document.getElementById('dev-id');
-        const type = document.getElementById('dev-type').value;
-        const currentVal = devIdInput.value;
-        
-        if (currentVal === '' || currentVal.startsWith('CL-') || currentVal.startsWith('FHC-')) {
-            devIdInput.value = (type === 'ถังดับเพลิง') ? 'CL-' : 'FHC-';
-        }
-    }
-
-    function openAddDeviceModal() {
+    function openAddDeviceModal(defaultType) {
+        const devType = defaultType || "ถังดับเพลิง";
         document.getElementById('deviceModalTitle').innerText = "เพิ่มอุปกรณ์ใหม่";
         document.getElementById('edit-dev-original-id').value = "";
-        document.getElementById('dev-type').value = "ถังดับเพลิง";
-        document.getElementById('dev-id').value = "CL-";
+        
+        const typeSelect = document.getElementById('dev-type');
+        typeSelect.value = devType;
+        typeSelect.disabled = true; // ล็อคประเภทอุปกรณ์
+
+        document.getElementById('dev-id').value = (devType === 'ถังดับเพลิง') ? 'CL-' : 'FHC-';
         document.getElementById('dev-point').value = "";
         document.getElementById('dev-floor').value = "";
         document.getElementById('dev-buydate').value = "";
-        document.getElementById('dev-remark').value = ""; 
+        document.getElementById('dev-lifespan').value = "";
+        document.getElementById('dev-remark').value = "";
+
+        document.getElementById('dev-chemical-type').value = "";
+        ['a', 'b', 'c', 'd', 'k'].forEach(c => {
+            document.getElementById(`class-${c}`).checked = false;
+        });
+
+        toggleExtinguisherFields();
         new bootstrap.Modal(document.getElementById('deviceModal')).show();
     }
 
@@ -1652,13 +1839,25 @@
         document.getElementById('deviceModalTitle').innerText = "แก้ไขข้อมูลอุปกรณ์";
         document.getElementById('edit-dev-original-id').value = d.ID;
         document.getElementById('dev-id').value = d.ID;
-        document.getElementById('dev-type').value = d.Type;
+        
+        const typeSelect = document.getElementById('dev-type');
+        typeSelect.value = d.Type;
+        typeSelect.disabled = true; // ล็อคประเภทอุปกรณ์ขณะแก้ไข
+
         document.getElementById('dev-point').value = d.InstallPoint;
         document.getElementById('dev-floor').value = d.Floor;
         document.getElementById('dev-buydate').value = d.BuyDate || "";
-        document.getElementById('dev-lifespan').value = d.Lifespan || 5;
-        document.getElementById('dev-remark').value = d.Remark || ""; 
+        document.getElementById('dev-lifespan').value = d.Lifespan || "";
+        document.getElementById('dev-remark').value = d.Remark || "";
 
+        document.getElementById('dev-chemical-type').value = d.ChemicalType || "";
+
+        const fireClasses = d.FireClasses || [];
+        ['a', 'b', 'c', 'd', 'k'].forEach(c => {
+            document.getElementById(`class-${c}`).checked = fireClasses.includes(c.toUpperCase());
+        });
+
+        toggleExtinguisherFields();
         new bootstrap.Modal(document.getElementById('deviceModal')).show();
     }
 
@@ -1672,18 +1871,38 @@
         const lifespan = document.getElementById('dev-lifespan').value;
         const remark = document.getElementById('dev-remark').value.trim();
 
+        const chemicalType = document.getElementById('dev-chemical-type').value;
+        const fireClasses = [];
+        ['a', 'b', 'c', 'd', 'k'].forEach(c => {
+            if (document.getElementById(`class-${c}`).checked) {
+                fireClasses.push(c.toUpperCase());
+            }
+        });
+
         if(!id || id === 'CL-' || id === 'FHC-') return Swal.fire('เตือน', 'กรุณาระบุรหัสอุปกรณ์ให้ครบถ้วน', 'warning');
+
+        const deviceData = {
+            ID: id,
+            Type: type,
+            InstallPoint: point,
+            Floor: floor,
+            BuyDate: buyDate,
+            Lifespan: lifespan,
+            Remark: remark,
+            ChemicalType: (type === 'ถังดับเพลิง') ? chemicalType : '',
+            FireClasses: (type === 'ถังดับเพลิง') ? fireClasses : []
+        };
 
         if(origId) {
             const idx = mockDevices.findIndex(x => x.ID === origId);
             if(idx !== -1) {
-                mockDevices[idx] = { ID: id, Type: type, InstallPoint: point, Floor: floor, BuyDate: buyDate, Lifespan: lifespan, Remark: remark };
+                mockDevices[idx] = deviceData;
             }
         } else {
             if(mockDevices.some(x => x.ID === id)) {
                 return Swal.fire('เตือน', 'รหัสอุปกรณ์นี้มีอยู่ในระบบแล้ว', 'warning');
             }
-            mockDevices.push({ ID: id, Type: type, InstallPoint: point, Floor: floor, BuyDate: buyDate, Lifespan: lifespan, Remark: remark });
+            mockDevices.push(deviceData);
         }
 
         saveToLocalStorage();
@@ -1928,7 +2147,7 @@
         showPage('scan-page');
         loadFromFirebase(); // เรียกข้อมูลจาก Firebase เมื่อโหลดหน้าเว็บ
 
-        // 4. ตั้งค่าดวงตารหัสผ่าน (กดเพื่อดู ปล่อยเม้าเพื่อปิดอัตโนมัติ)
+        // ตั้งค่าดวงตารหัสผ่าน (กดเพื่อดู ปล่อยเม้าเพื่อปิดอัตโนมัติ)
         const btnEye = document.getElementById('btn-eye-password');
         const passInput = document.getElementById('login-password');
         const eyeIcon = document.getElementById('eye-icon');
