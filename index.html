@@ -650,9 +650,15 @@
                         <input type="text" id="user-password" class="form-control rounded-3">
                     </div>
                 </div>
-                <div class="mb-3">
-                    <label class="form-label small fw-semibold">ชื่อ-นามสกุล</label>
-                    <input type="text" id="user-fullname" class="form-control rounded-3">
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label small fw-semibold">ชื่อ-นามสกุล</label>
+                        <input type="text" id="user-fullname" class="form-control rounded-3">
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label small fw-semibold">เบอร์โทรศัพท์</label>
+                        <input type="text" id="user-phone" class="form-control rounded-3" placeholder="08X-XXX-XXXX">
+                    </div>
                 </div>
                 <div class="row">
                     <div class="col-md-6 mb-3">
@@ -840,7 +846,20 @@
     // ========================================================
     // NAVIGATION & AUTH
     // ========================================================
+    function closeMobileMenu() {
+        const navbarCollapse = document.getElementById('navbarNav');
+        if (navbarCollapse && navbarCollapse.classList.contains('show')) {
+            let bsCollapse = bootstrap.Collapse.getInstance(navbarCollapse);
+            if (!bsCollapse) {
+                bsCollapse = new bootstrap.Collapse(navbarCollapse, { toggle: false });
+            }
+            bsCollapse.hide();
+        }
+    }
+
     function showPage(pageId) {
+        closeMobileMenu();
+
         if (pageId !== 'settings-page' && isAdminLoggedIn) {
             isAdminLoggedIn = false;
             currentUser = null;
@@ -862,6 +881,8 @@
     }
 
     function accessSettings() {
+        closeMobileMenu();
+
         if (isAdminLoggedIn) {
             showPage('settings-page');
             loadDevices();
@@ -1492,6 +1513,9 @@
                     <td>${d.Floor}</td>
                     <td>
                         <div class="d-flex justify-content-center gap-1">
+                            <button class="btn btn-action btn-outline-success" onclick="viewDeviceInfo('${d.ID}')" title="ดูข้อมูลอุปกรณ์">
+                                <i class="fa-solid fa-eye"></i>
+                            </button>
                             <button class="btn btn-action btn-outline-dark" onclick="printQR('${d.ID}')" title="ปริ้น QR Code">
                                 <i class="fa-solid fa-print"></i>
                             </button>
@@ -1508,6 +1532,28 @@
                     </td>
                 </tr>
             `;
+        });
+    }
+
+    function viewDeviceInfo(id) {
+        const d = mockDevices.find(x => x.ID === id);
+        if(!d) return;
+
+        Swal.fire({
+            title: `<i class="fa-solid fa-circle-info me-2 text-primary"></i> ข้อมูลอุปกรณ์ ${d.ID}`,
+            html: `
+                <div class="text-start fs-6 my-3 bg-light p-3 rounded-3 border">
+                    <p class="mb-2"><b>รหัสอุปกรณ์:</b> ${d.ID}</p>
+                    <p class="mb-2"><b>ประเภท:</b> ${d.Type}</p>
+                    <p class="mb-2"><b>จุดติดตั้ง:</b> ${d.InstallPoint}</p>
+                    <p class="mb-2"><b>ชั้น:</b> ${d.Floor}</p>
+                    <p class="mb-2"><b>วันที่ซื้อ:</b> ${d.BuyDate || '-'}</p>
+                    <p class="mb-2"><b>อายุการใช้งาน:</b> ${d.Lifespan || '-'} ปี</p>
+                    <p class="text-danger mb-0"><b>หมายเหตุ:</b> ${d.Remark || '-'}</p>
+                </div>
+            `,
+            showCloseButton: true,
+            showConfirmButton: false
         });
     }
 
@@ -1679,14 +1725,42 @@
                     <td class="fw-bold">${u.Username}</td>
                     <td>${u.Name}</td>
                     <td>${u.Position}</td>
-                    <td>${u.Phone}</td>
+                    <td>${u.Phone || '-'}</td>
                     <td><span class="badge ${u.Role === 'admin' ? 'bg-danger':'bg-secondary'} px-2 py-1 rounded-pill">${u.Role}</span></td>
                     <td>
-                        <button class="btn btn-action btn-outline-warning" onclick="openEditUserModal('${u.ID}')"><i class="fa-solid fa-pencil"></i></button>
-                        <button class="btn btn-action btn-outline-danger" onclick="deleteUser('${u.ID}')"><i class="fa-solid fa-trash"></i></button>
+                        <div class="d-flex justify-content-center gap-1">
+                            <button class="btn btn-action btn-outline-info" onclick="viewUserInfo('${u.ID}')" title="ดูข้อมูลผู้ใช้"><i class="fa-solid fa-eye"></i></button>
+                            <button class="btn btn-action btn-outline-warning" onclick="openEditUserModal('${u.ID}')"><i class="fa-solid fa-pencil"></i></button>
+                            <button class="btn btn-action btn-outline-danger" onclick="deleteUser('${u.ID}')"><i class="fa-solid fa-trash"></i></button>
+                        </div>
                     </td>
                 </tr>
             `;
+        });
+    }
+
+    function viewUserInfo(id) {
+        const u = mockUsers.find(x => x.ID === id);
+        if(!u) return;
+
+        Swal.fire({
+            title: `<i class="fa-solid fa-user me-2 text-primary"></i> ข้อมูลผู้ใช้งาน`,
+            html: `
+                <div class="text-start fs-6 my-3 bg-light p-3 rounded-3 border">
+                    <p class="mb-2"><b>ID:</b> ${u.ID}</p>
+                    <p class="mb-2"><b>Username:</b> ${u.Username}</p>
+                    <p class="mb-2"><b>ชื่อ-นามสกุล:</b> ${u.Name}</p>
+                    <p class="mb-2"><b>ตำแหน่ง:</b> ${u.Position}</p>
+                    <p class="mb-2"><b>เบอร์โทรศัพท์:</b> ${u.Phone || '-'}</p>
+                    <p class="mb-2"><b>สิทธิ์การใช้งาน:</b> <span class="badge ${u.Role === 'admin' ? 'bg-danger':'bg-secondary'} px-2 py-1 rounded-pill">${u.Role}</span></p>
+                    <hr>
+                    <p class="mb-1 text-muted small fw-bold">กำหนดสิทธิ์:</p>
+                    <p class="mb-1 text-sm"><i class="fa-solid ${u.CanDeleteHistory ? 'fa-circle-check text-success':'fa-circle-xmark text-secondary'} me-1"></i> ลบ/ล้างประวัติการตรวจ</p>
+                    <p class="mb-0 text-sm"><i class="fa-solid ${u.CanEditStatus ? 'fa-circle-check text-success':'fa-circle-xmark text-secondary'} me-1"></i> แก้ไขผล/สถานะ/วันที่การตรวจ</p>
+                </div>
+            `,
+            showCloseButton: true,
+            showConfirmButton: false
         });
     }
 
@@ -1696,6 +1770,7 @@
         document.getElementById('user-username').value = "";
         document.getElementById('user-password').value = "";
         document.getElementById('user-fullname').value = "";
+        document.getElementById('user-phone').value = "";
         document.getElementById('user-position').value = "";
         document.getElementById('user-role').value = "user";
         document.getElementById('user-perm-delete').checked = false;
@@ -1712,6 +1787,7 @@
         document.getElementById('user-username').value = u.Username;
         document.getElementById('user-password').value = u.Password;
         document.getElementById('user-fullname').value = u.Name;
+        document.getElementById('user-phone').value = u.Phone || "";
         document.getElementById('user-position').value = u.Position;
         document.getElementById('user-role').value = u.Role;
         document.getElementById('user-perm-delete').checked = u.CanDeleteHistory || false;
@@ -1725,6 +1801,7 @@
         const uname = document.getElementById('user-username').value.trim();
         const pass = document.getElementById('user-password').value.trim();
         const fname = document.getElementById('user-fullname').value.trim();
+        const phone = document.getElementById('user-phone').value.trim();
         const pos = document.getElementById('user-position').value.trim();
         const role = document.getElementById('user-role').value;
         const canDel = document.getElementById('user-perm-delete').checked;
@@ -1745,13 +1822,14 @@
                 }
                 mockUsers[idx].Username = uname;
                 mockUsers[idx].Name = fname;
+                mockUsers[idx].Phone = phone;
                 mockUsers[idx].Position = pos;
                 mockUsers[idx].CanDeleteHistory = canDel;
                 mockUsers[idx].CanEditStatus = canEdit;
             }
         } else {
             const newId = "U00" + (mockUsers.length + 1);
-            mockUsers.push({ ID: newId, Username: uname, Password: pass, Role: role, Name: fname, Position: pos, Phone: "-", CanDeleteHistory: canDel, CanEditStatus: canEdit });
+            mockUsers.push({ ID: newId, Username: uname, Password: pass, Role: role, Name: fname, Position: pos, Phone: phone || "-", CanDeleteHistory: canDel, CanEditStatus: canEdit });
         }
 
         saveToLocalStorage();
