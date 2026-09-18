@@ -1417,7 +1417,7 @@
         for(let m = 1; m <= 12; m++) {
             const insp = mockInspections.find(i => i.DeviceID === d.ID && i.Month === m && i.Year === cYear);
             if(insp) {
-                const bClass = insp.Remarks === "ใช้งานได้" ? "bg-success" : "bg-danger";
+                const bClass = insp.Remarks === "ใช้งานได้" ? "bg-success" : (insp.Remarks === "ชำรุด" ? "bg-danger" : "bg-warning");
                 
                 let chkDetails = '';
                 if(insp.Checklist) {
@@ -1433,10 +1433,27 @@
                         <td><span class="text-success"><i class="fa-solid fa-check"></i> ตรวจแล้ว</span></td>
                         <td>${insp.Inspector}</td><td>${insp.Date}</td>
                         <td><span class="badge ${bClass}">${insp.Remarks}</span>${chkDetails}</td>
+                        <td>
+                            <button class="btn btn-action btn-outline-warning btn-sm" onclick="editMonthlyInspection('${d.ID}', ${m}, ${cYear})" title="แก้ไขผลการตรวจ">
+                                <i class="fa-solid fa-pencil"></i>
+                            </button>
+                        </td>
                     </tr>
                 `;
             } else {
-                yearlyRows += `<tr><td class="fw-bold">${m} (${mNames[m-1]})</td><td><span class="text-danger"><i class="fa-solid fa-xmark"></i> ยังไม่ตรวจ</span></td><td>-</td><td>-</td><td>-</td></tr>`;
+                // เพิ่มปุ่มดินสอเข้าไปในเดือนที่ยังไม่ได้ตรวจ
+                yearlyRows += `
+                    <tr>
+                        <td class="fw-bold">${m} (${mNames[m-1]})</td>
+                        <td><span class="text-danger"><i class="fa-solid fa-xmark"></i> ยังไม่ตรวจ</span></td>
+                        <td>-</td><td>-</td><td>-</td>
+                        <td>
+                            <button class="btn btn-action btn-outline-warning btn-sm" onclick="editMonthlyInspection('${d.ID}', ${m}, ${cYear})" title="เพิ่มผลการตรวจย้อนหลัง">
+                                <i class="fa-solid fa-pencil"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `;
             }
         }
 
@@ -1454,7 +1471,7 @@
                     <h6 class="fw-bold text-success"><i class="fa-solid fa-calendar-check me-2"></i>ตารางการตรวจรายปี ${cYear}</h6>
                     <div class="table-responsive" style="max-height: 250px; overflow-y: auto;">
                         <table class="table table-sm align-middle text-center small border mb-0">
-                            <thead class="table-dark"><tr><th>เดือน</th><th>สถานะ</th><th>ผู้ตรวจ</th><th>วันที่ตรวจ</th><th>ผลการตรวจ</th></tr></thead>
+                            <thead class="table-dark"><tr><th>เดือน</th><th>สถานะ</th><th>ผู้ตรวจ</th><th>วันที่ตรวจ</th><th>ผลการตรวจ</th><th>การจัดการ</th></tr></thead>
                             <tbody>${yearlyRows}</tbody>
                         </table>
                     </div>
@@ -1462,6 +1479,150 @@
             `,
             width: '700px', showCloseButton: true, showConfirmButton: false
         });
+    }
+
+    async function editMonthlyInspection(deviceId, month, year) {
+        if (!(await authenticateAction('CanEditStatus'))) {
+            setTimeout(() => viewDeviceStatus(deviceId), 500);
+            return;
+        }
+
+        const inspIndex = mockInspections.findIndex(i => i.DeviceID === deviceId && i.Month === month && i.Year === year);
+        
+        if (inspIndex !== -1) {
+            // กรณีที่มีผลการตรวจอยู่แล้ว (ใช้แก้ไขสถานะแบบเดิม)
+            const insp = mockInspections[inspIndex];
+            const { value: newStatus } = await Swal.fire({
+                title: `แก้ไขผลการตรวจเดือน ${month}`,
+                input: 'select',
+                inputOptions: {
+                    'ใช้งานได้': '✅ ใช้งานได้ (ปกติ)',
+                    'ชำรุด': '❌ ชำรุด (ต้องซ่อมแซม/เปลี่ยน)'
+                },
+                inputValue: insp.Remarks,
+                showCancelButton: true,
+                confirmButtonText: 'บันทึก',
+                cancelButtonText: 'ยกเลิก',
+                confirmButtonColor: '#ef4444'
+            });
+
+            if (newStatus) {
+                mockInspections[inspIndex].Remarks = newStatus;
+                saveToLocalStorage();
+                if(document.getElementById('history-page').classList.contains('active')) loadHistory();
+                Swal.fire({icon: 'success', title: 'แก้ไขสำเร็จ', timer: 1500, showConfirmButton: false});
+                setTimeout(() => { viewDeviceStatus(deviceId); }, 1500);
+            } else {
+                viewDeviceStatus(deviceId);
+            }
+        } else {
+            // กรณีที่ยังไม่มีผลการตรวจ (ใช้บันทึกผลย้อนหลัง)
+            const device = mockDevices.find(d => d.ID === deviceId);
+            let checklistHtml = '';
+            if(device.Type === 'ถังดับเพลิง') {
+                checklistHtml = `
+                    <div class="text-start mt-3 p-3 border rounded bg-light" style="font-size:0.9rem;">
+                        <p class="fw-bold mb-2 text-danger"><i class="fa-solid fa-list-check me-1"></i> หัวข้อการตรวจอุปกรณ์ (ย้อนหลัง)</p>
+                        <div class="mb-2 border-bottom pb-1">
+                            <label class="d-block text-muted">1. แรงดันถังดับเพลิง</label>
+                            <input type="radio" name="chk1_bd" value="ปกติ" checked> ปกติ &nbsp;
+                            <input type="radio" name="chk1_bd" value="ไม่ปกติ"> ไม่ปกติ
+                        </div>
+                        <div class="mb-2 border-bottom pb-1">
+                            <label class="d-block text-muted">2. สลักถังดับเพลิง</label>
+                            <input type="radio" name="chk2_bd" value="มี" checked> มี &nbsp;
+                            <input type="radio" name="chk2_bd" value="ไม่มี"> ไม่มี
+                        </div>
+                        <div class="mb-2 border-bottom pb-1">
+                            <label class="d-block text-muted">3. คันบีบถังดับเพลิง</label>
+                            <input type="radio" name="chk3_bd" value="ปกติ" checked> ปกติ &nbsp;
+                            <input type="radio" name="chk3_bd" value="ไม่ปกติ"> ไม่ปกติ
+                        </div>
+                        <div class="mb-2 border-bottom pb-1">
+                            <label class="d-block text-muted">4. สายฉีดถังดับเพลิง</label>
+                            <input type="radio" name="chk4_bd" value="ปกติ" checked> ปกติ &nbsp;
+                            <input type="radio" name="chk4_bd" value="ไม่ปกติ"> ไม่ปกติ
+                        </div>
+                        <div class="mb-2 border-bottom pb-1">
+                            <label class="d-block text-muted">5. ยกถังตรวจสภาพน้ำยา</label>
+                            <input type="radio" name="chk5_bd" value="ทำแล้ว" checked> ทำแล้ว &nbsp;
+                            <input type="radio" name="chk5_bd" value="ยังไม่ได้ทำ"> ยังไม่ได้ทำ
+                        </div>
+                        <div class="mb-1">
+                            <label class="d-block text-muted">6. ทำความสะอาดถังดับเพลิง</label>
+                            <input type="radio" name="chk6_bd" value="ทำแล้ว" checked> ทำแล้ว &nbsp;
+                            <input type="radio" name="chk6_bd" value="ยังไม่ได้ทำ"> ยังไม่ได้ทำ
+                        </div>
+                    </div>
+                `;
+            }
+
+            Swal.fire({
+                title: `บันทึกการตรวจย้อนหลังเดือน ${month}`,
+                customClass: { popup: 'swal-wide' },
+                html: `
+                    <div class="text-center mb-2">
+                        <p class="mb-1 text-muted">รหัสอุปกรณ์: <b class="text-dark fs-5">${deviceId}</b></p>
+                        <p class="mb-0">ประเภท: <b>${device.Type}</b></p>
+                    </div>
+                    <hr>
+                    <div class="text-start mt-2">
+                        <label class="form-label fw-bold text-danger">รหัสพนักงานผู้ตรวจ (ย้อนหลัง):</label>
+                        <input id="swal-emp-id-backdate" class="swal2-input mx-0 w-100 mb-3" placeholder="ตัวอย่าง: EMP001">
+                        
+                        <label class="form-label fw-bold text-primary">สถานะอุปกรณ์ (ภาพรวม):</label>
+                        <select id="swal-status-backdate" class="swal2-select mx-0 w-100" style="display: flex;">
+                            <option value="ใช้งานได้">✅ ใช้งานได้ (ปกติ)</option>
+                            <option value="ชำรุด">❌ ชำรุด (ต้องซ่อมแซม/เปลี่ยน)</option>
+                        </select>
+                    </div>
+                    ${checklistHtml}
+                `,
+                icon: 'info', showCancelButton: true, confirmButtonColor: '#ef4444',
+                confirmButtonText: 'บันทึกผล', cancelButtonText: 'ยกเลิก',
+                preConfirm: () => {
+                    const empId = document.getElementById('swal-emp-id-backdate').value.trim();
+                    const status = document.getElementById('swal-status-backdate').value;
+                    if (!empId) { Swal.showValidationMessage('กรุณากรอกรหัสพนักงาน'); return false; }
+                    const employee = mockEmployees.find(e => e.EmpID === empId);
+                    if (!employee) { Swal.showValidationMessage('ไม่พบรหัสพนักงานนี้ในระบบ'); return false; }
+                    
+                    let checkData = null;
+                    if(device.Type === 'ถังดับเพลิง') {
+                        checkData = {
+                            c1: document.querySelector('input[name="chk1_bd"]:checked').value,
+                            c2: document.querySelector('input[name="chk2_bd"]:checked').value,
+                            c3: document.querySelector('input[name="chk3_bd"]:checked').value,
+                            c4: document.querySelector('input[name="chk4_bd"]:checked').value,
+                            c5: document.querySelector('input[name="chk5_bd"]:checked').value,
+                            c6: document.querySelector('input[name="chk6_bd"]:checked').value
+                        };
+                    }
+                    return { employee: employee, status: status, checklist: checkData };
+                }
+            }).then((res) => {
+                if (res.isConfirmed) {
+                    const { employee, status, checklist } = res.value;
+                    const now = new Date();
+                    
+                    // บันทึกโดยบังคับใส่เดือน (Month) ที่ผู้ใช้เลือกเข้ามา และบันทึกเวลาปัจจุบัน
+                    const newInsp = {
+                        ID: "INSP" + now.getTime(),
+                        DeviceID: deviceId, DeviceType: device.Type, Inspector: employee.Name, 
+                        Date: now.toLocaleDateString('th-TH'), Time: now.toLocaleTimeString('th-TH'),
+                        Month: month, Year: year,
+                        Remarks: status, Checklist: checklist
+                    };
+                    mockInspections.push(newInsp);
+                    saveToLocalStorage();
+                    if(document.getElementById('history-page').classList.contains('active')) loadHistory();
+                    Swal.fire({icon: 'success', title: 'บันทึกย้อนหลังสำเร็จ!', timer: 2000, showConfirmButton: false});
+                    setTimeout(() => { viewDeviceStatus(deviceId); }, 2000);
+                } else {
+                    viewDeviceStatus(deviceId);
+                }
+            });
+        }
     }
 
     // แก้ไขข้อ 1: ฟังก์ชันแสดง QR Code เฉพาะหน้ารายการอุปกรณ์ (แสดงปุ่ม X ปิด แต่ไม่มี พิมพ์/ดาวน์โหลด)
