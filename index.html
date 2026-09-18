@@ -18,8 +18,6 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <!-- Firebase Realtime Database -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
-    <!-- SheetJS (For Excel Export) -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
     <style>
         :root {
@@ -233,22 +231,10 @@
 
         .cursor-pointer { cursor: pointer; }
 
-        .swal-wide {
-            width: 500px !important;
-        }
-
         @media print {
             .no-print { display: none !important; }
             body { background: white; }
-            .custom-card { box-shadow: none; border: none; padding: 0 !important; }
-            .table tbody tr { box-shadow: none; border-bottom: 1px solid #ccc; }
-            /* สไตล์สำหรับหัวตารางเวลาปริ้น */
-            .table thead th { 
-                background-color: #f8f9fa !important; 
-                color: #000 !important; 
-                border-bottom: 2px solid #000 !important; 
-            }
-            .table th, .table td { border: 1px solid #dee2e6 !important; }
+            .custom-card { box-shadow: none; border: none; }
         }
     </style>
 </head>
@@ -279,11 +265,6 @@
                 <li class="nav-item">
                     <a class="nav-link" id="nav-status" href="#" onclick="showPage('status-page'); resetStatusPage();">
                         <i class="fa-solid fa-clipboard-check me-2"></i>สถานะอุปกรณ์
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" id="nav-devices-list" href="#" onclick="showPage('devices-list-page'); loadPublicDeviceList();">
-                        <i class="fa-solid fa-list-ul me-2"></i>รายการอุปกรณ์
                     </a>
                 </li>
                 <li class="nav-item">
@@ -318,6 +299,7 @@
                         <h4 class="fw-bold m-0 text-dark">สแกน QR Code ประจำเดือน</h4>
                     </div>
 
+                    <!-- กล้อง สแกน QR สำหรับการตรวจ -->
                     <div id="reader" class="scanner-container my-3"></div>
 
                     <div class="d-flex justify-content-center gap-2 mt-4">
@@ -335,6 +317,7 @@
 
     <!-- ================= PAGE 2: HISTORY (ประวัติการตรวจ) ================= -->
     <div id="history-page" class="page">
+        <!-- การแจ้งเตือนถังที่ยังไม่ได้ตรวจ -->
         <div class="custom-card p-4 mb-4 border-start border-4 border-warning no-print">
             <div class="d-flex align-items-center justify-content-between mb-2">
                 <h5 class="fw-bold text-warning-emphasis m-0">
@@ -348,53 +331,25 @@
             <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4 no-print">
                 <h4 class="fw-bold m-0"><i class="fa-solid fa-list-check me-2 text-danger"></i> ประวัติการตรวจเช็ค</h4>
                 <div class="d-flex align-items-center gap-2 flex-wrap">
-                    <select id="hist-filter-type" class="form-select form-select-sm w-auto rounded-3 shadow-sm" onchange="loadHistory()">
-                        <option value="all">ทุกประเภท</option>
-                        <option value="ถังดับเพลิง">ถังดับเพลิง</option>
-                        <option value="ตู้ Fire Hose">ตู้ FHC</option>
-                    </select>
-                    <select id="hist-filter-month" class="form-select form-select-sm w-auto rounded-3 shadow-sm" onchange="loadHistory()">
-                        <option value="all">ทุกเดือน</option>
-                        <option value="1">มกราคม</option>
-                        <option value="2">กุมภาพันธ์</option>
-                        <option value="3">มีนาคม</option>
-                        <option value="4">เมษายน</option>
-                        <option value="5">พฤษภาคม</option>
-                        <option value="6">มิถุนายน</option>
-                        <option value="7">กรกฎาคม</option>
-                        <option value="8">สิงหาคม</option>
-                        <option value="9">กันยายน</option>
-                        <option value="10">ตุลาคม</option>
-                        <option value="11">พฤศจิกายน</option>
-                        <option value="12">ธันวาคม</option>
-                    </select>
-                    <select id="hist-filter-floor" class="form-select form-select-sm w-auto rounded-3 shadow-sm" onchange="loadHistory()">
-                        <option value="all">ทุกชั้น</option>
-                    </select>
-                    <span class="text-muted small ms-1">แสดง:</span>
+                    <span class="text-muted small">แสดง:</span>
                     <select id="limit-select" class="form-select form-select-sm w-auto rounded-3 shadow-sm" onchange="loadHistory()">
                         <option value="10">10</option>
                         <option value="30">30</option>
                         <option value="50">50</option>
                         <option value="100">100</option>
-                        <option value="999999">ทั้งหมด</option>
                     </select>
-                    
                     <button class="btn btn-success btn-sm rounded-3 px-3 shadow-sm" onclick="window.print()">
-                        <i class="fa-solid fa-print me-1"></i> พิมพ์
+                        <i class="fa-solid fa-print me-1"></i> พิมพ์ประวัติ
                     </button>
-                    <button class="btn btn-info text-white btn-sm rounded-3 px-3 shadow-sm" onclick="exportHistoryExcel()">
-                        <i class="fa-solid fa-file-excel me-1"></i> Excel
-                    </button>
-
+                    <!-- ปรับให้ปุ่มล้างประวัติแสดงเสมอ แต่มีการตรวจสอบสิทธิ์เมื่อกด -->
                     <button id="btn-clear-history" class="btn btn-outline-danger btn-sm rounded-3 px-3" onclick="clearHistory()">
-                        <i class="fa-solid fa-trash me-1"></i> ล้างประวัติ
+                        <i class="fa-solid fa-trash me-1"></i> ล้างประวัติทั้งหมด
                     </button>
                 </div>
             </div>
 
             <div class="table-responsive">
-                <table class="table align-middle text-center" id="historyTableToExport">
+                <table class="table align-middle text-center">
                     <thead>
                         <tr>
                             <th>วันที่ตรวจ</th>
@@ -403,7 +358,7 @@
                             <th>ประเภท</th>
                             <th>ผู้ตรวจ</th>
                             <th>สถานะอุปกรณ์</th>
-                            <th class="no-print">จัดการ</th>
+                            <th class="no-print">จัดการ</th> <!-- ปรับให้แสดงเสมอ -->
                         </tr>
                     </thead>
                     <tbody id="history-table-body"></tbody>
@@ -424,6 +379,7 @@
                         <h4 class="fw-bold m-0 text-dark">สแกนดูข้อมูลถัง/ตู้</h4>
                     </div>
 
+                    <!-- กล้อง สแกน QR สำหรับดูข้อมูล -->
                     <div id="status-reader" class="scanner-container my-3"></div>
 
                     <div class="d-flex justify-content-center gap-2 mt-4">
@@ -438,12 +394,14 @@
             </div>
         </div>
 
+        <!-- ส่วนแสดงข้อมูลเมื่อสแกนสำเร็จ -->
         <div id="device-info-container" class="custom-card p-4 d-none">
             <div class="d-flex justify-content-between align-items-center border-bottom pb-2 mb-3">
                 <h5 class="fw-bold m-0 text-primary"><i class="fa-solid fa-tags me-2"></i>ข้อมูลอุปกรณ์</h5>
                 <button type="button" class="btn-close" onclick="resetStatusPage()" aria-label="Close" title="ปิด"></button>
             </div>
             <div class="row mb-4" id="device-details">
+                <!-- ข้อมูลจะถูก render ที่นี่ผ่าน JS -->
             </div>
             
             <h5 class="fw-bold border-bottom pb-2 mb-3 text-success">
@@ -458,98 +416,13 @@
                             <th>ใครตรวจ</th>
                             <th>วันที่ตรวจ</th>
                             <th>สถานะอุปกรณ์</th>
-                            <th>จัดการ</th>
+                            <th>จัดการ</th> <!-- เพิ่มคอลัมน์จัดการ -->
                         </tr>
                     </thead>
                     <tbody id="yearly-inspection-body">
+                        <!-- ตาราง 12 เดือน จะถูก render ที่นี่ผ่าน JS -->
                     </tbody>
                 </table>
-            </div>
-        </div>
-    </div>
-
-    <!-- ================= PAGE 3.5: PUBLIC DEVICE LIST (รายการอุปกรณ์) ================= -->
-    <div id="devices-list-page" class="page">
-        <div class="custom-card p-4">
-            <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4 no-print">
-                <h4 class="fw-bold m-0"><i class="fa-solid fa-list-ul me-2 text-primary"></i> รายการอุปกรณ์ทั้งหมด</h4>
-                
-                <div class="d-flex align-items-center gap-2 flex-wrap">
-                    <span class="text-muted small">กรอง:</span>
-                    <select id="list-filter-floor" class="form-select form-select-sm w-auto rounded-3 shadow-sm" onchange="loadPublicDeviceList()">
-                        <option value="all">ทุกชั้น</option>
-                    </select>
-                    <select id="list-filter-year" class="form-select form-select-sm w-auto rounded-3 shadow-sm" onchange="loadPublicDeviceList()">
-                        <option value="all">ทุกปีที่สั่งซื้อ</option>
-                    </select>
-                    <select id="list-filter-lifespan" class="form-select form-select-sm w-auto rounded-3 shadow-sm" onchange="loadPublicDeviceList()">
-                        <option value="all">อายุการใช้งานทั้งหมด</option>
-                        <option value="ok">ยังไม่หมดอายุ</option>
-                        <option value="expired">หมดอายุแล้ว</option>
-                    </select>
-                    <button class="btn btn-secondary btn-sm rounded-3 px-3 shadow-sm" onclick="window.print()">
-                        <i class="fa-solid fa-print me-1"></i> พิมพ์
-                    </button>
-                    <button class="btn btn-success btn-sm rounded-3 px-3 shadow-sm" onclick="exportDeviceListExcel()">
-                        <i class="fa-solid fa-file-excel me-1"></i> ดาวน์โหลด Excel
-                    </button>
-                </div>
-            </div>
-
-            <ul class="nav nav-pills mb-4 gap-2 no-print" id="pills-list-tab" role="tablist">
-                <li class="nav-item" role="presentation">
-                    <button class="nav-link active fw-medium" id="tab-list-ext-btn" data-bs-toggle="pill" data-bs-target="#pills-list-ext" type="button" role="tab" aria-selected="true" onclick="currentListTab='ext'">
-                        <i class="fa-solid fa-fire-extinguisher me-2"></i>ถังดับเพลิง
-                    </button>
-                </li>
-                <li class="nav-item" role="presentation">
-                    <button class="nav-link fw-medium" id="tab-list-fhc-btn" data-bs-toggle="pill" data-bs-target="#pills-list-fhc" type="button" role="tab" aria-selected="false" onclick="currentListTab='fhc'">
-                        <i class="fa-solid fa-droplet me-2"></i>ตู้ FHC
-                    </button>
-                </li>
-            </ul>
-
-            <div class="tab-content">
-                <div class="tab-pane fade show active" id="pills-list-ext" role="tabpanel">
-                    <h5 class="d-none d-print-block text-center fw-bold mb-3">รายงานรายการอุปกรณ์ถังดับเพลิง</h5>
-                    <div class="table-responsive">
-                        <table class="table align-middle text-center" id="publicExtTable">
-                            <thead>
-                                <tr>
-                                    <th style="width: 80px;" class="no-print">QR Code</th>
-                                    <th>รหัสถัง</th>
-                                    <th>ชนิดถัง</th>
-                                    <th>จุดติดตั้ง</th>
-                                    <th>ชั้น</th>
-                                    <th>ปีที่สั่งซื้อ</th>
-                                    <th>อายุการใช้งาน</th>
-                                    <th class="no-print">ดู</th>
-                                </tr>
-                            </thead>
-                            <tbody id="public-extinguisher-body"></tbody>
-                        </table>
-                    </div>
-                </div>
-
-                <div class="tab-pane fade" id="pills-list-fhc" role="tabpanel">
-                    <h5 class="d-none d-print-block text-center fw-bold mb-3">รายงานรายการอุปกรณ์ตู้ FHC</h5>
-                    <div class="table-responsive">
-                        <table class="table align-middle text-center" id="publicFhcTable">
-                            <thead>
-                                <tr>
-                                    <th style="width: 80px;" class="no-print">QR Code</th>
-                                    <th>รหัสตู้</th>
-                                    <th>จุดติดตั้ง</th>
-                                    <th>ชั้น</th>
-                                    <th>ปีที่สั่งซื้อ</th>
-                                    <th>อายุการใช้งาน</th>
-                                    <th class="no-print">ดู</th>
-                                </tr>
-                            </thead>
-                            <tbody id="public-fhc-body"></tbody>
-                        </table>
-                    </div>
-                </div>
             </div>
         </div>
     </div>
@@ -557,31 +430,33 @@
     <!-- ================= PAGE 4: SYSTEM SETTINGS (ตั้งค่าระบบ) ================= -->
     <div id="settings-page" class="page">
         
+        <!-- Tab เมนูจัดการ -->
         <ul class="nav nav-pills mb-4 gap-2" id="pills-tab" role="tablist">
             <li class="nav-item" role="presentation">
-                <button class="nav-link active fw-medium" id="tab-extinguisher-btn" data-bs-toggle="pill" data-bs-target="#pills-extinguisher" type="button" role="tab" aria-selected="true">
+                <button class="nav-link active fw-medium" id="tab-extinguisher-btn" data-bs-toggle="pill" data-bs-target="#pills-extinguisher" type="button" role="tab" aria-controls="pills-extinguisher" aria-selected="true">
                     <i class="fa-solid fa-fire-extinguisher me-2"></i>จัดการอุปกรณ์ถังดับเพลิง
                 </button>
             </li>
             <li class="nav-item" role="presentation">
-                <button class="nav-link fw-medium" id="tab-fhc-btn" data-bs-toggle="pill" data-bs-target="#pills-fhc" type="button" role="tab" aria-selected="false">
+                <button class="nav-link fw-medium" id="tab-fhc-btn" data-bs-toggle="pill" data-bs-target="#pills-fhc" type="button" role="tab" aria-controls="pills-fhc" aria-selected="false">
                     <i class="fa-solid fa-droplet me-2"></i>จัดการอุปกรณ์ตู้ FHC
                 </button>
             </li>
             <li class="nav-item" role="presentation">
-                <button class="nav-link fw-medium" id="tab-users-btn" data-bs-toggle="pill" data-bs-target="#pills-users" type="button" role="tab" aria-selected="false">
+                <button class="nav-link fw-medium" id="tab-users-btn" data-bs-toggle="pill" data-bs-target="#pills-users" type="button" role="tab" aria-controls="pills-users" aria-selected="false">
                     <i class="fa-solid fa-users-gear me-2"></i>จัดการผู้ใช้งาน
                 </button>
             </li>
             <li class="nav-item" role="presentation">
-                <button class="nav-link fw-medium" id="tab-employees-btn" data-bs-toggle="pill" data-bs-target="#pills-employees" type="button" role="tab" aria-selected="false">
+                <button class="nav-link fw-medium" id="tab-employees-btn" data-bs-toggle="pill" data-bs-target="#pills-employees" type="button" role="tab" aria-controls="pills-employees" aria-selected="false">
                     <i class="fa-solid fa-id-badge me-2"></i>จัดการพนักงาน
                 </button>
             </li>
         </ul>
 
         <div class="tab-content" id="pills-tabContent">
-            <div class="tab-pane fade show active" id="pills-extinguisher" role="tabpanel">
+            <!-- แท็บ 1: จัดการอุปกรณ์ถังดับเพลิง -->
+            <div class="tab-pane fade show active" id="pills-extinguisher" role="tabpanel" aria-labelledby="tab-extinguisher-btn">
                 <div class="custom-card p-4">
                     <div class="d-flex justify-content-between align-items-center mb-4">
                         <h4 class="fw-bold m-0"><i class="fa-solid fa-fire-extinguisher me-2 text-danger"></i> รายการอุปกรณ์ถังดับเพลิง</h4>
@@ -597,7 +472,7 @@
                                     <th>รหัสถัง</th>
                                     <th>จุดติดตั้ง</th>
                                     <th>ชั้น</th>
-                                    <th style="width: 260px;">จัดการ</th>
+                                    <th style="width: 220px;">จัดการ</th>
                                 </tr>
                             </thead>
                             <tbody id="extinguisher-table-body"></tbody>
@@ -606,12 +481,13 @@
                 </div>
             </div>
 
-            <div class="tab-pane fade" id="pills-fhc" role="tabpanel">
+            <!-- แท็บ 2: จัดการอุปกรณ์ตู้ FHC -->
+            <div class="tab-pane fade" id="pills-fhc" role="tabpanel" aria-labelledby="tab-fhc-btn">
                 <div class="custom-card p-4">
                     <div class="d-flex justify-content-between align-items-center mb-4">
                         <h4 class="fw-bold m-0"><i class="fa-solid fa-droplet me-2 text-primary"></i> รายการอุปกรณ์ตู้ Fire Hose (FHC)</h4>
                         <button class="btn btn-primary rounded-3 px-3 shadow-sm" onclick="openAddDeviceModal('ตู้ Fire Hose')">
-                            <i class="fa-solid fa-plus me-1"></i> เพิ่มตู้ FHCใหม่
+                            <i class="fa-solid fa-plus me-1"></i> เพิ่มตู้ FHC ใหม่
                         </button>
                     </div>
                     <div class="table-responsive">
@@ -622,7 +498,7 @@
                                     <th>รหัสตู้</th>
                                     <th>จุดติดตั้ง</th>
                                     <th>ชั้น</th>
-                                    <th style="width: 260px;">จัดการ</th>
+                                    <th style="width: 220px;">จัดการ</th>
                                 </tr>
                             </thead>
                             <tbody id="fhc-table-body"></tbody>
@@ -631,7 +507,8 @@
                 </div>
             </div>
 
-            <div class="tab-pane fade" id="pills-users" role="tabpanel">
+            <!-- แท็บ 3: จัดการผู้ใช้งาน -->
+            <div class="tab-pane fade" id="pills-users" role="tabpanel" aria-labelledby="tab-users-btn">
                 <div class="custom-card p-4">
                     <div class="d-flex justify-content-between align-items-center mb-4">
                         <h4 class="fw-bold m-0"><i class="fa-solid fa-user-shield me-2 text-danger"></i> ผู้ใช้งานในระบบ</h4>
@@ -658,7 +535,8 @@
                 </div>
             </div>
 
-            <div class="tab-pane fade" id="pills-employees" role="tabpanel">
+            <!-- แท็บ 4: จัดการพนักงาน -->
+            <div class="tab-pane fade" id="pills-employees" role="tabpanel" aria-labelledby="tab-employees-btn">
                 <div class="custom-card p-4">
                     <div class="d-flex justify-content-between align-items-center mb-4">
                         <h4 class="fw-bold m-0"><i class="fa-solid fa-id-card me-2 text-danger"></i> ฐานข้อมูลพนักงาน (ผู้ตรวจ)</h4>
@@ -735,7 +613,7 @@
                 <h5 class="modal-title fw-bold" id="deviceModalTitle">เพิ่มอุปกรณ์</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
-            <div class="modal-body" style="max-height: 70vh; overflow-y: auto;">
+            <div class="modal-body">
                 <input type="hidden" id="edit-dev-original-id">
                 
                 <div class="mb-3">
@@ -746,6 +624,7 @@
                     </select>
                 </div>
 
+                <!-- ส่วนข้อมูลเพิ่มเติมเฉพาะถังดับเพลิง -->
                 <div id="extinguisher-extra-fields">
                     <div class="mb-3">
                         <label class="form-label small fw-semibold">ชนิดของถังดับเพลิง</label>
@@ -757,36 +636,41 @@
                             <option value="Dry Chemical">Dry Chemical</option>
                             <option value="BF2000">BF2000</option>
                             <option value="FireAde2000">FireAde2000</option>
-                            <option value="F-500 AVD (Aqueous Vermiculite Dispersion)">F-500 AVD (Aqueous Vermiculite Dispersion)</option>
                         </select>
                     </div>
+
                     <div class="mb-3">
                         <label class="form-label small fw-semibold d-block">ประเภทของไฟที่ดับได้ (เลือกได้หลายข้อ)</label>
                         <div class="d-flex flex-wrap gap-2 p-2 border rounded-3 bg-light">
+                            <!-- Class A -->
                             <div class="form-check d-flex align-items-center gap-1 me-2">
                                 <input class="form-check-input" type="checkbox" value="A" id="class-a">
                                 <label class="form-check-label small d-flex align-items-center gap-1 cursor-pointer" for="class-a">
                                     <img src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='15' fill='%231b5e20'/><text x='70' y='38' font-size='24' font-weight='bold' fill='%23ffffff' text-anchor='middle'>A</text><path d='M20 75 h30 v-32 h-30 z M15 38 h40 v-6 h-40 z' fill='%23ffffff'/></svg>" style="width:24px; height:24px; border-radius:4px;"> 1. ประเภท A
                                 </label>
                             </div>
+                            <!-- Class B -->
                             <div class="form-check d-flex align-items-center gap-1 me-2">
                                 <input class="form-check-input" type="checkbox" value="B" id="class-b">
                                 <label class="form-check-label small d-flex align-items-center gap-1 cursor-pointer" for="class-b">
                                     <img src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='15' fill='%23b71c1c'/><text x='70' y='38' font-size='24' font-weight='bold' fill='%23ffffff' text-anchor='middle'>B</text><path d='M22 45 h25 v30 h-25 z M28 32 h13 v13 h-13 z' fill='%23ffffff'/></svg>" style="width:24px; height:24px; border-radius:4px;"> 2. ประเภท B
                                 </label>
                             </div>
+                            <!-- Class C -->
                             <div class="form-check d-flex align-items-center gap-1 me-2">
                                 <input class="form-check-input" type="checkbox" value="C" id="class-c">
                                 <label class="form-check-label small d-flex align-items-center gap-1 cursor-pointer" for="class-c">
                                     <img src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='15' fill='%230d47a1'/><text x='70' y='38' font-size='24' font-weight='bold' fill='%23ffffff' text-anchor='middle'>C</text><path d='M18 48 h22 v14 h-22 z M40 52 h18 v6 h-18 z' fill='%23ffffff'/></svg>" style="width:24px; height:24px; border-radius:4px;"> 3. ประเภท C
                                 </label>
                             </div>
+                            <!-- Class D -->
                             <div class="form-check d-flex align-items-center gap-1 me-2">
                                 <input class="form-check-input" type="checkbox" value="D" id="class-d">
                                 <label class="form-check-label small d-flex align-items-center gap-1 cursor-pointer" for="class-d">
                                     <img src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='15' fill='%23f57f17'/><text x='50' y='65' font-size='42' font-weight='bold' fill='%23ffffff' text-anchor='middle'>D</text></svg>" style="width:24px; height:24px; border-radius:4px;"> 4. ประเภท D
                                 </label>
                             </div>
+                            <!-- Class K -->
                             <div class="form-check d-flex align-items-center gap-1 me-2">
                                 <input class="form-check-input" type="checkbox" value="K" id="class-k">
                                 <label class="form-check-label small d-flex align-items-center gap-1 cursor-pointer" for="class-k">
@@ -814,38 +698,37 @@
                 <div class="row">
                     <div class="col-md-6 mb-3">
                         <label class="form-label small fw-semibold">ปีที่สั่งซื้อ</label>
-                        <select id="dev-buydate" class="form-select rounded-3" onchange="autoFillLifespan()">
+                        <select id="dev-buydate" class="form-select rounded-3">
                             <option value="">-- เลือกปี พ.ศ. --</option>
-                            <script>
-                                for(let y=2555; y<=2575; y++){
-                                    document.write(`<option value="${y}">${y}</option>`);
-                                }
-                            </script>
+                            <option value="2555">2555</option>
+                            <option value="2556">2556</option>
+                            <option value="2557">2557</option>
+                            <option value="2558">2558</option>
+                            <option value="2559">2559</option>
+                            <option value="2560">2560</option>
+                            <option value="2561">2561</option>
+                            <option value="2562">2562</option>
+                            <option value="2563">2563</option>
+                            <option value="2564">2564</option>
+                            <option value="2565">2565</option>
+                            <option value="2566">2566</option>
+                            <option value="2567">2567</option>
+                            <option value="2568">2568</option>
+                            <option value="2569">2569</option>
+                            <option value="2570">2570</option>
+                            <option value="2571">2571</option>
+                            <option value="2572">2572</option>
+                            <option value="2573">2573</option>
+                            <option value="2574">2574</option>
+                            <option value="2575">2575</option>
                         </select>
                     </div>
                     <div class="col-md-6 mb-3">
-                        <label class="form-label small fw-semibold text-success">อายุการใช้งานปัจจุบัน</label>
-                        <input type="text" id="dev-lifespan" class="form-control rounded-3" placeholder="เช่น 1 ปี, 2 ปี">
+                        <label class="form-label small fw-semibold">อายุการใช้งาน (ปี)</label>
+                        <input type="number" id="dev-lifespan" class="form-control rounded-3">
                     </div>
                 </div>
-
-                <div id="usage-history-section" class="mb-3 p-3 border rounded bg-light" style="display:none;">
-                    <label class="form-label small fw-semibold text-primary">ประวัติการใช้งาน</label>
-                    <select id="dev-usage-status" class="form-select rounded-3 mb-2" onchange="toggleUsageDetails()">
-                        <option value="ไม่เคยใช้งาน">ไม่เคยใช้งาน</option>
-                        <option value="เคยใช้งาน">เคยใช้งาน</option>
-                    </select>
-                    <div id="usage-details" style="display:none;">
-                        <label class="form-label small fw-semibold">ระบุจำนวนครั้งที่ใช้งาน (1-10)</label>
-                        <select id="dev-usage-count" class="form-select rounded-3 mb-2" onchange="generateUsageDates()">
-                            <script>
-                                for(let c=1; c<=10; c++) document.write(`<option value="${c}">${c} ครั้ง</option>`);
-                            </script>
-                        </select>
-                        <div id="usage-dates-container" class="mt-2 row g-2"></div>
-                    </div>
-                </div>
-
+                <!-- เพิ่มช่องหมายเหตุ -->
                 <div class="mb-3">
                     <label class="form-label small fw-semibold">หมายเหตุ</label>
                     <textarea id="dev-remark" class="form-control rounded-3" rows="2" placeholder="กรอกข้อความหรือข้อมูลเพิ่มเติม..."></textarea>
@@ -954,6 +837,9 @@
 </div>
 
 <script>
+    // ========================================================
+    // === ตั้งค่า FIREBASE ===
+    // วาง Firebase Config ของคุณตรงนี้
     const firebaseConfig = {
         apiKey: "AIzaSyD_w1UCGnZlWtZTQC76Oj3-ZFz1BancDVs",
         authDomain: "fireman-checklist.firebaseapp.com",
@@ -963,20 +849,33 @@
         messagingSenderId: "896968569913",
         appId: "1:896968569913:web:28bcd5db8bc29c1c8009e8"
     };
-    if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+    
+    // Initialize Firebase
+    if (!firebase.apps.length) {
+        firebase.initializeApp(firebaseConfig);
+    }
     const db = firebase.database();
 
+    // === ตั้งค่า GOOGLE SHEETS ===
+    // นำ URL ที่ได้จากการ Deploy Apps Script มาวางตรงนี้
+    const GOOGLE_SHEET_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyxphOgPUbMBpu6g8tJALU1Xxicpf8b1C3MR6OlZoauwVo-OioiFqMKUsPGbcb75DpmjA/exec";
+    // ========================================================
+
+
+    // ========================================================
+    // GLOBAL STATE & DATA
+    // ========================================================
     let isAdminLoggedIn = false;
     let currentUser = null;
     let html5QrcodeScanner = null;
     let html5StatusScanner = null;
-    let currentListTab = 'ext'; 
 
     let mockDevices = [];
     let mockUsers = [{ ID: "U001", Username: "admin", Password: "20033457", Role: "admin", Name: "ผู้ดูแลระบบ", Position: "Admin", Phone: "-" }];
     let mockEmployees = [];
     let mockInspections = [];
 
+    // รูปไอคอน SVG ประจำประเภทไฟ
     const fireClassIcons = {
         A: "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='15' fill='%231b5e20'/><text x='70' y='38' font-size='24' font-weight='bold' fill='%23ffffff' text-anchor='middle'>A</text><path d='M20 75 h30 v-32 h-30 z M15 38 h40 v-6 h-40 z' fill='%23ffffff'/></svg>",
         B: "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='15' fill='%23b71c1c'/><text x='70' y='38' font-size='24' font-weight='bold' fill='%23ffffff' text-anchor='middle'>B</text><path d='M22 45 h25 v30 h-25 z M28 32 h13 v13 h-13 z' fill='%23ffffff'/></svg>",
@@ -985,23 +884,7 @@
         K: "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='15' fill='%23212121'/><text x='50' y='65' font-size='42' font-weight='bold' fill='%23ffffff' text-anchor='middle'>K</text></svg>"
     };
 
-    function checkDeviceExpired(buyDateStr) {
-        if(!buyDateStr) return false;
-        let buyYearPS = parseInt(buyDateStr);
-        let age = (new Date().getFullYear() + 543) - buyYearPS;
-        return age >= 5; 
-    }
-
-    function autoFillLifespan() {
-        let y = document.getElementById('dev-buydate').value;
-        if(y) {
-            let age = (new Date().getFullYear() + 543) - parseInt(y);
-            document.getElementById('dev-lifespan').value = age + " ปี";
-        } else {
-            document.getElementById('dev-lifespan').value = "";
-        }
-    }
-
+    // โหลดข้อมูลทั้งหมดจาก Firebase เมื่อเปิดหน้าเว็บ
     function loadFromFirebase() {
         db.ref('/').on('value', (snapshot) => {
             const data = snapshot.val() || {};
@@ -1010,24 +893,25 @@
             mockEmployees = data.FIRE_EMPLOYEES || [];
             mockInspections = data.FIRE_INSPECTIONS || [];
 
+            // ตรวจสอบรหัสผ่าน Admin ให้เป็นค่าดั้งเดิมเสมอตามเงื่อนไข
             const adminIdx = mockUsers.findIndex(u => u.Username === "admin");
             if (adminIdx !== -1 && mockUsers[adminIdx].Password !== "20033457") {
                 mockUsers[adminIdx].Password = "20033457";
             }
 
+            // รีเฟรช UI ถ้าหน้าต่างนั้นเปิดอยู่
             if(document.getElementById('settings-page').classList.contains('active')) {
-                loadDevices(); loadUsers(); loadEmployees();
+                loadDevices();
+                loadUsers();
+                loadEmployees();
             }
             if(document.getElementById('history-page').classList.contains('active')) {
                 loadHistory();
             }
-            if(document.getElementById('devices-list-page').classList.contains('active')) {
-                loadPublicDeviceList();
-            }
-            updateFilters();
         });
     }
 
+    // บันทึกข้อมูลกลับไปที่ Firebase แทน localStorage
     function saveToLocalStorage() {
         db.ref('FIRE_DEVICES').set(mockDevices);
         db.ref('FIRE_USERS').set(mockUsers);
@@ -1035,42 +919,38 @@
         db.ref('FIRE_EMPLOYEES').set(mockEmployees);
     }
 
-    function updateFilters() {
-        let floors = new Set(mockDevices.map(d => d.Floor).filter(f => f));
-        let floorOptions = `<option value="all">ทุกชั้น</option>`;
-        [...floors].sort().forEach(f => {
-            floorOptions += `<option value="${f}">ชั้น ${f}</option>`;
-        });
-        document.getElementById('hist-filter-floor').innerHTML = floorOptions;
-        document.getElementById('list-filter-floor').innerHTML = floorOptions;
-
-        let years = new Set(mockDevices.map(d => d.BuyDate).filter(y => y));
-        let yearOptions = `<option value="all">ทุกปีที่สั่งซื้อ</option>`;
-        [...years].sort().forEach(y => {
-            yearOptions += `<option value="${y}">ปี ${y}</option>`;
-        });
-        document.getElementById('list-filter-year').innerHTML = yearOptions;
-    }
-
+    // ========================================================
+    // AUTHENTICATION POPUP FOR ACTIONS (ลบ/แก้ไข)
+    // ========================================================
     async function authenticateAction(requiredPermission) {
         if (isAdminLoggedIn) return true;
+
         const { value: formValues } = await Swal.fire({
             title: 'ยืนยันสิทธิ์ผู้ดูแล',
             html:
                 '<p class="text-muted small mb-3">กรุณาใส่รหัส Admin หรือรหัสผู้ใช้งานที่ได้รับสิทธิ์</p>' +
-                '<input id="swal-auth-user" class="swal2-input mt-0 mb-3 w-100 mx-0" placeholder="รหัสผู้ใช้งาน">' +
-                '<input id="swal-auth-pass" type="password" class="swal2-input m-0 w-100 mx-0" placeholder="รหัสผ่าน">',
-            focusConfirm: false, showCancelButton: true, confirmButtonColor: '#ef4444',
-            confirmButtonText: 'ยืนยัน', cancelButtonText: 'ยกเลิก',
+                '<input id="swal-auth-user" class="swal2-input mt-0 mb-3 w-100 mx-0" placeholder="รหัสผู้ใช้งาน (Username / ID)" style="font-size:1rem;">' +
+                '<input id="swal-auth-pass" type="password" class="swal2-input m-0 w-100 mx-0" placeholder="รหัสผ่าน" style="font-size:1rem;">',
+            focusConfirm: false,
+            showCancelButton: true,
+            confirmButtonColor: '#ef4444',
+            confirmButtonText: '<i class="fa-solid fa-check me-1"></i> ยืนยัน',
+            cancelButtonText: 'ยกเลิก',
             preConfirm: () => {
                 const user = document.getElementById('swal-auth-user').value.trim();
                 const pass = document.getElementById('swal-auth-pass').value.trim();
-                if (!user || !pass) { Swal.showValidationMessage('กรุณากรอกข้อมูลให้ครบ'); return false; }
+                if (!user || !pass) {
+                    Swal.showValidationMessage('กรุณากรอกข้อมูลให้ครบ');
+                    return false;
+                }
                 return { user, pass };
             }
         });
+
         if (!formValues) return false;
+
         const { user, pass } = formValues;
+
         const userObj = mockUsers.find(u => (u.Username === user || u.ID === user) && u.Password === pass);
         if (userObj) {
             if (userObj.Role === 'admin') return true;
@@ -1079,29 +959,42 @@
             Swal.fire('ปฏิเสธการเข้าถึง', 'ผู้ใช้งานนี้ไม่มีสิทธิ์ในการทำรายการนี้', 'error');
             return false;
         }
+
         Swal.fire('ข้อมูลไม่ถูกต้อง', 'รหัสผู้ใช้งานหรือรหัสผ่านไม่ถูกต้อง', 'error');
         return false;
     }
 
+    // ========================================================
+    // NAVIGATION & AUTH
+    // ========================================================
     function closeMobileMenu() {
-        const nc = document.getElementById('navbarNav');
-        if (nc && nc.classList.contains('show')) bootstrap.Collapse.getInstance(nc).hide();
+        const navbarCollapse = document.getElementById('navbarNav');
+        if (navbarCollapse && navbarCollapse.classList.contains('show')) {
+            let bsCollapse = bootstrap.Collapse.getInstance(navbarCollapse);
+            if (!bsCollapse) {
+                bsCollapse = new bootstrap.Collapse(navbarCollapse, { toggle: false });
+            }
+            bsCollapse.hide();
+        }
     }
 
     function showPage(pageId) {
         closeMobileMenu();
+
         if (pageId !== 'settings-page' && isAdminLoggedIn) {
-            isAdminLoggedIn = false; currentUser = null;
+            isAdminLoggedIn = false;
+            currentUser = null;
             document.getElementById('admin-badge').classList.add('d-none');
             document.getElementById('btn-logout').classList.add('d-none');
         }
+
         document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
         document.querySelectorAll('.navbar-nav .nav-link').forEach(l => l.classList.remove('active'));
+        
         document.getElementById(pageId).classList.add('active');
         if(pageId === 'scan-page') document.getElementById('nav-scan').classList.add('active');
         if(pageId === 'history-page') document.getElementById('nav-history').classList.add('active');
         if(pageId === 'status-page') document.getElementById('nav-status').classList.add('active');
-        if(pageId === 'devices-list-page') document.getElementById('nav-devices-list').classList.add('active');
         if(pageId === 'settings-page') document.getElementById('nav-settings').classList.add('active');
 
         if(pageId !== 'scan-page') stopScanner();
@@ -1110,579 +1003,860 @@
 
     function accessSettings() {
         closeMobileMenu();
-        if (isAdminLoggedIn) { 
-            showPage('settings-page'); 
-            loadDevices(); loadUsers(); loadEmployees(); 
-        } else { 
+
+        if (isAdminLoggedIn) {
+            showPage('settings-page');
+            loadDevices();
+            loadUsers();
+            loadEmployees();
+        } else {
             document.getElementById('login-username').value = '';
             document.getElementById('login-password').value = '';
-            new bootstrap.Modal(document.getElementById('loginModal')).show(); 
+            const loginModal = new bootstrap.Modal(document.getElementById('loginModal'));
+            loginModal.show();
         }
     }
 
     function handleLogin() {
         const u = document.getElementById('login-username').value.trim();
         const p = document.getElementById('login-password').value.trim();
+
         const user = mockUsers.find(x => x.Username === u && x.Password === p);
 
         if (user && user.Role === 'admin') {
-            isAdminLoggedIn = true; currentUser = user;
+            isAdminLoggedIn = true;
+            currentUser = user;
+            
+            document.getElementById('login-username').value = '';
+            document.getElementById('login-password').value = '';
+
             bootstrap.Modal.getInstance(document.getElementById('loginModal')).hide();
+            
             document.getElementById('admin-badge').classList.remove('d-none');
             document.getElementById('btn-logout').classList.remove('d-none');
-            Swal.fire({ icon: 'success', title: 'สำเร็จ', timer: 1500, showConfirmButton: false });
-            showPage('settings-page'); loadDevices(); loadUsers(); loadEmployees();
-        } else { Swal.fire('ไม่สำเร็จ', 'Username หรือ Password ไม่ถูกต้อง', 'error'); }
+
+            Swal.fire({
+                icon: 'success',
+                title: 'เข้าสู่ระบบสำเร็จ',
+                text: `ยินดีต้อนรับคุณ ${user.Name}`,
+                timer: 1500,
+                showConfirmButton: false
+            });
+
+            showPage('settings-page');
+            loadDevices();
+            loadUsers();
+            loadEmployees();
+            loadHistory();
+        } else {
+            Swal.fire({
+                icon: 'error',
+                title: 'เข้าสู่ระบบไม่สำเร็จ',
+                text: 'ชื่อผู้ใช้งานหรือรหัสผ่านไม่ถูกต้อง (เฉพาะ Admin เท่านั้น)',
+                confirmButtonColor: '#ef4444'
+            });
+        }
     }
 
     function logout() {
-        isAdminLoggedIn = false; currentUser = null;
+        isAdminLoggedIn = false;
+        currentUser = null;
         document.getElementById('admin-badge').classList.add('d-none');
         document.getElementById('btn-logout').classList.add('d-none');
-        document.getElementById('login-username').value = '';
-        document.getElementById('login-password').value = '';
+        
+        Swal.fire({
+            icon: 'info',
+            title: 'ออกจากระบบแล้ว',
+            timer: 1200,
+            showConfirmButton: false
+        });
+
         showPage('scan-page');
+        loadHistory();
     }
 
+    // ========================================================
+    // 1. SCANNER & INSPECTION LOGIC (หน้าการตรวจ)
+    // ========================================================
     function startScanner() {
         if(html5QrcodeScanner) return;
         html5QrcodeScanner = new Html5Qrcode("reader");
-        html5QrcodeScanner.start({ facingMode: "environment" }, { fps: 10, qrbox: { width: 220, height: 220 } },
-            (decodedText) => { stopScanner(); handleScanResult(decodedText); }, (err) => {}
-        ).catch(err => { Swal.fire('ข้อผิดพลาด', 'ไม่สามารถเปิดกล้องได้', 'warning'); });
+        html5QrcodeScanner.start(
+            { facingMode: "environment" },
+            { fps: 10, qrbox: { width: 220, height: 220 } },
+            (decodedText) => {
+                stopScanner();
+                handleScanResult(decodedText);
+            },
+            (err) => {}
+        ).catch(err => {
+            Swal.fire('ข้อผิดพลาดกล้อง', 'ไม่สามารถเปิดกล้องได้ โปรดอนุญาตสิทธิ์กล้องในเบราว์เซอร์', 'warning');
+        });
     }
+
     function stopScanner() {
-        if (html5QrcodeScanner) { html5QrcodeScanner.stop().then(() => { html5QrcodeScanner.clear(); html5QrcodeScanner = null; }); }
+        if (html5QrcodeScanner) {
+            html5QrcodeScanner.stop().then(() => {
+                html5QrcodeScanner.clear();
+                html5QrcodeScanner = null;
+            });
+        }
     }
 
     function handleScanResult(deviceId) {
         const device = mockDevices.find(d => d.ID === deviceId);
-        if(!device) return Swal.fire('ข้อผิดพลาด', 'ไม่พบอุปกรณ์นี้ในระบบ', 'error');
-        
-        let checklistHtml = '';
-        if(device.Type === 'ถังดับเพลิง') {
-            checklistHtml = `
-                <div class="text-start mt-3 p-3 border rounded bg-light" style="font-size:0.9rem;">
-                    <p class="fw-bold mb-2 text-danger"><i class="fa-solid fa-list-check me-1"></i> หัวข้อการตรวจอุปกรณ์</p>
-                    <div class="mb-2 border-bottom pb-1">
-                        <label class="d-block text-muted">1. แรงดันถังดับเพลิง</label>
-                        <input type="radio" name="chk1" id="chk1_1" value="ปกติ" checked> ปกติ &nbsp;
-                        <input type="radio" name="chk1" id="chk1_2" value="ไม่ปกติ"> ไม่ปกติ
-                    </div>
-                    <div class="mb-2 border-bottom pb-1">
-                        <label class="d-block text-muted">2. สลักถังดับเพลิง</label>
-                        <input type="radio" name="chk2" id="chk2_1" value="มี" checked> มี &nbsp;
-                        <input type="radio" name="chk2" id="chk2_2" value="ไม่มี"> ไม่มี
-                    </div>
-                    <div class="mb-2 border-bottom pb-1">
-                        <label class="d-block text-muted">3. คันบีบถังดับเพลิง</label>
-                        <input type="radio" name="chk3" id="chk3_1" value="ปกติ" checked> ปกติ &nbsp;
-                        <input type="radio" name="chk3" id="chk3_2" value="ไม่ปกติ"> ไม่ปกติ
-                    </div>
-                    <div class="mb-2 border-bottom pb-1">
-                        <label class="d-block text-muted">4. สายฉีดถังดับเพลิง</label>
-                        <input type="radio" name="chk4" id="chk4_1" value="ปกติ" checked> ปกติ &nbsp;
-                        <input type="radio" name="chk4" id="chk4_2" value="ไม่ปกติ"> ไม่ปกติ
-                    </div>
-                    <div class="mb-2 border-bottom pb-1">
-                        <label class="d-block text-muted">5. ยกถังตรวจสภาพน้ำยา</label>
-                        <input type="radio" name="chk5" id="chk5_1" value="ทำแล้ว" checked> ทำแล้ว &nbsp;
-                        <input type="radio" name="chk5" id="chk5_2" value="ยังไม่ได้ทำ"> ยังไม่ได้ทำ
-                    </div>
-                    <div class="mb-1">
-                        <label class="d-block text-muted">6. ทำความสะอาดถังดับเพลิง</label>
-                        <input type="radio" name="chk6" id="chk6_1" value="ทำแล้ว" checked> ทำแล้ว &nbsp;
-                        <input type="radio" name="chk6" id="chk6_2" value="ยังไม่ได้ทำ"> ยังไม่ได้ทำ
-                    </div>
-                </div>
-            `;
+        if(!device) {
+             Swal.fire('ข้อผิดพลาด', 'ไม่พบอุปกรณ์นี้ในระบบ', 'error');
+             return;
         }
+        const deviceType = device.Type;
 
         Swal.fire({
             title: `บันทึกการตรวจเช็ค`,
-            customClass: { popup: 'swal-wide' },
             html: `
-                <div class="text-center mb-2">
+                <div class="text-center mb-3">
                     <p class="mb-1 text-muted">รหัสอุปกรณ์: <b class="text-dark fs-5">${deviceId}</b></p>
-                    <p class="mb-0">ประเภท: <b>${device.Type}</b></p>
+                    <p class="mb-2">ประเภท: <b>${deviceType}</b></p>
                 </div>
                 <hr>
-                <div class="text-start mt-2">
+                <div class="text-start mt-3">
                     <label class="form-label fw-bold text-danger">รหัสพนักงานผู้ตรวจ:</label>
-                    <input id="swal-emp-id" class="swal2-input mx-0 w-100 mb-3" placeholder="ตัวอย่าง: EMP001">
+                    <input id="swal-emp-id" class="swal2-input mx-0 w-100 mb-3" placeholder="ตัวอย่าง: EMP001" style="height: 45px; font-size: 1rem;">
                     
-                    <label class="form-label fw-bold text-primary">สถานะอุปกรณ์ (ภาพรวม):</label>
+                    <label class="form-label fw-bold text-primary">สถานะอุปกรณ์:</label>
                     <select id="swal-status" class="swal2-select mx-0 w-100" style="display: flex;">
                         <option value="ใช้งานได้">✅ ใช้งานได้ (ปกติ)</option>
                         <option value="ชำรุด">❌ ชำรุด (ต้องซ่อมแซม/เปลี่ยน)</option>
                     </select>
                 </div>
-                ${checklistHtml}
             `,
-            icon: 'info', showCancelButton: true, confirmButtonColor: '#ef4444',
-            confirmButtonText: 'บันทึกผล', cancelButtonText: 'ยกเลิก',
+            icon: 'info',
+            showCancelButton: true,
+            confirmButtonColor: '#ef4444',
+            confirmButtonText: 'บันทึกผลการตรวจ',
+            cancelButtonText: 'ยกเลิก',
             preConfirm: () => {
                 const empId = document.getElementById('swal-emp-id').value.trim();
                 const status = document.getElementById('swal-status').value;
-                if (!empId) { Swal.showValidationMessage('กรุณากรอกรหัสพนักงาน'); return false; }
-                const employee = mockEmployees.find(e => e.EmpID === empId);
-                if (!employee) { Swal.showValidationMessage('ไม่พบรหัสพนักงานนี้'); return false; }
                 
-                let checkData = null;
-                if(device.Type === 'ถังดับเพลิง') {
-                    checkData = {
-                        c1: document.querySelector('input[name="chk1"]:checked').value,
-                        c2: document.querySelector('input[name="chk2"]:checked').value,
-                        c3: document.querySelector('input[name="chk3"]:checked').value,
-                        c4: document.querySelector('input[name="chk4"]:checked').value,
-                        c5: document.querySelector('input[name="chk5"]:checked').value,
-                        c6: document.querySelector('input[name="chk6"]:checked').value
-                    };
+                if (!empId) {
+                    Swal.showValidationMessage('กรุณากรอกรหัสพนักงาน');
+                    return false;
                 }
-                return { employee: employee, status: status, checklist: checkData };
+                const employee = mockEmployees.find(e => e.EmpID === empId);
+                if (!employee) {
+                    Swal.showValidationMessage('ไม่พบรหัสพนักงานนี้ในฐานข้อมูล');
+                    return false;
+                }
+                return { employee: employee, status: status };
             }
         }).then((res) => {
             if (res.isConfirmed) {
-                const { employee, status, checklist } = res.value;
+                const { employee, status } = res.value;
                 const now = new Date();
-                
-                const newInsp = {
-                    ID: "INSP" + now.getTime(),
-                    DeviceID: deviceId, DeviceType: device.Type, Inspector: employee.Name, 
-                    Date: now.toLocaleDateString('th-TH'), Time: now.toLocaleTimeString('th-TH'),
-                    Month: now.getMonth() + 1, Year: now.getFullYear(),
-                    Remarks: status, Checklist: checklist
+                const dateStr = now.toLocaleDateString('th-TH');
+                const timeStr = now.toLocaleTimeString('th-TH');
+
+                const newInspection = {
+                    ID: "INSP" + new Date().getTime(),
+                    DeviceID: deviceId,
+                    DeviceType: deviceType,
+                    Inspector: employee.Name, 
+                    Date: dateStr,
+                    Time: timeStr,
+                    Month: now.getMonth() + 1,
+                    Year: now.getFullYear(),
+                    Remarks: status
                 };
-                mockInspections.push(newInsp);
-                saveToLocalStorage();
-                Swal.fire({icon: 'success', title: 'บันทึกสำเร็จ!', timer: 2000});
+
+                mockInspections.push(newInspection);
+                saveToLocalStorage(); // บันทึกลง Firebase
+
+                // --- ส่งข้อมูลไปที่ Google Sheets ---
+                const sheetData = {
+                    date: dateStr,
+                    time: timeStr,
+                    deviceId: deviceId,
+                    type: deviceType,
+                    inspector: employee.Name,
+                    status: status
+                };
+
+                if(GOOGLE_SHEET_WEB_APP_URL && GOOGLE_SHEET_WEB_APP_URL !== "YOUR_GOOGLE_APPS_SCRIPT_WEB_APP_URL") {
+                    fetch(GOOGLE_SHEET_WEB_APP_URL, {
+                        method: 'POST',
+                        mode: 'no-cors',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(sheetData)
+                    }).catch(err => console.error("Sheets Error:", err));
+                }
+                // ---------------------------------
+
+                Swal.fire({
+                    icon: 'success',
+                    title: 'บันทึกสำเร็จ!',
+                    text: `ผู้ตรวจ: ${employee.Name} | สถานะ: ${status}`,
+                    timer: 2500
+                });
             }
         });
     }
 
+    // ========================================================
+    // HISTORY LOGIC
+    // ========================================================
     function loadHistory() {
         const limit = parseInt(document.getElementById('limit-select').value);
-        const fType = document.getElementById('hist-filter-type').value;
-        const fMonth = document.getElementById('hist-filter-month').value;
-        const fFloor = document.getElementById('hist-filter-floor').value;
-
         const currentMonth = new Date().getMonth() + 1;
         const currentYear = new Date().getFullYear();
-        const inspectedIds = mockInspections.filter(i => i.Month === currentMonth && i.Year === currentYear).map(i => i.DeviceID);
+
+        const inspectedIds = mockInspections
+            .filter(i => i.Month === currentMonth && i.Year === currentYear)
+            .map(i => i.DeviceID);
+
         const unscanned = mockDevices.filter(d => !inspectedIds.includes(d.ID));
         const unscannedUl = document.getElementById('unscanned-list');
-        if(unscannedUl) {
-            unscannedUl.innerHTML = '';
-            if (unscanned.length === 0 && mockDevices.length > 0) {
-                unscannedUl.innerHTML = `<li class="list-group-item text-success border-0"><i class="fa-solid fa-circle-check"></i> ตรวจครบแล้ว</li>`;
-            } else {
-                unscanned.forEach(u => unscannedUl.innerHTML += `<li class="list-group-item border-0 text-danger p-1"><i class="fa-solid fa-circle-dot"></i> ${u.ID} (${u.Type}) - จุดติดตั้ง: ${u.InstallPoint} ชั้น ${u.Floor}</li>`);
-            }
+        unscannedUl.innerHTML = '';
+
+        if (unscanned.length === 0 && mockDevices.length > 0) {
+            unscannedUl.innerHTML = `<li class="list-group-item text-success bg-transparent border-0"><i class="fa-solid fa-circle-check me-2"></i> ตรวจเช็คครบทุกถัง/ตู้ แล้วในเดือนนี้</li>`;
+        } else if (mockDevices.length === 0) {
+            unscannedUl.innerHTML = `<li class="list-group-item text-muted bg-transparent border-0"><i class="fa-solid fa-info-circle me-2"></i> ยังไม่มีอุปกรณ์ในระบบ</li>`;
+        } else {
+            unscanned.forEach(u => {
+                unscannedUl.innerHTML += `
+                    <li class="list-group-item bg-transparent border-0 text-danger p-1">
+                        <i class="fa-solid fa-circle-dot me-2"></i> <b>${u.ID}</b> (${u.Type}) - จุดติดตั้ง: ${u.InstallPoint} ชั้น ${u.Floor}
+                    </li>
+                `;
+            });
         }
 
         const tbody = document.getElementById('history-table-body');
         tbody.innerHTML = '';
         
-        let filtered = [...mockInspections].reverse();
-        if(fType !== 'all') filtered = filtered.filter(i => i.DeviceType === fType);
-        if(fMonth !== 'all') filtered = filtered.filter(i => i.Month.toString() === fMonth);
-        if(fFloor !== 'all') {
-            filtered = filtered.filter(i => {
-                let d = mockDevices.find(x => x.ID === i.DeviceID);
-                return d && d.Floor === fFloor;
-            });
-        }
-        
-        filtered.slice(0, limit).forEach(h => {
+        const historyData = [...mockInspections].reverse().slice(0, limit);
+
+        historyData.forEach(h => {
             const badgeClass = h.Remarks === "ใช้งานได้" ? "bg-success" : (h.Remarks === "ชำรุด" ? "bg-danger" : "bg-warning");
+            
             tbody.innerHTML += `
                 <tr>
-                    <td>${h.Date}</td><td>${h.Time}</td>
-                    <td class="fw-bold"><a href="javascript:void(0);" onclick="viewDeviceStatus('${h.DeviceID}')">${h.DeviceID}</a></td>
-                    <td>${h.DeviceType}</td><td>${h.Inspector}</td>
-                    <td><span class="badge ${badgeClass} px-3 py-2 rounded-pill">${h.Remarks}</span></td>
+                    <td>${h.Date}</td>
+                    <td>${h.Time}</td>
+                    <td class="fw-bold">
+                        <a href="javascript:void(0);" class="text-primary text-decoration-none" onclick="viewDeviceStatus('${h.DeviceID}')" title="คลิกเพื่อดูข้อมูลอุปกรณ์">
+                            ${h.DeviceID} <i class="fa-solid fa-window-restore small ms-1"></i>
+                        </a>
+                    </td>
+                    <td>${h.DeviceType}</td>
+                    <td>${h.Inspector}</td>
+                    <td><span class="badge ${badgeClass} px-3 py-2 rounded-pill shadow-sm">${h.Remarks}</span></td>
                     <td class="no-print">
-                        <button class="btn btn-action btn-outline-info" onclick="viewDeviceStatus('${h.DeviceID}')" title="ดูข้อมูล"><i class="fa-solid fa-eye"></i></button>
-                        <button class="btn btn-action btn-outline-danger" onclick="deleteHistory('${h.ID}')" title="ลบ"><i class="fa-solid fa-trash"></i></button>
+                        <button class="btn btn-action btn-outline-info" onclick="viewDeviceStatus('${h.DeviceID}')" title="ดูข้อมูลอุปกรณ์">
+                            <i class="fa-solid fa-eye"></i>
+                        </button>
+                        <button class="btn btn-action btn-outline-danger" onclick="deleteHistory('${h.ID}')" title="ลบรายการนี้">
+                            <i class="fa-solid fa-trash"></i>
+                        </button>
                     </td>
                 </tr>
             `;
         });
     }
 
-    function exportHistoryExcel() {
-        const limit = parseInt(document.getElementById('limit-select').value);
-        const fType = document.getElementById('hist-filter-type').value;
-        const fMonth = document.getElementById('hist-filter-month').value;
-        const fFloor = document.getElementById('hist-filter-floor').value;
-        
-        let filtered = [...mockInspections].reverse();
-        if(fType !== 'all') filtered = filtered.filter(i => i.DeviceType === fType);
-        if(fMonth !== 'all') filtered = filtered.filter(i => i.Month.toString() === fMonth);
-        if(fFloor !== 'all') {
-            filtered = filtered.filter(i => {
-                let d = mockDevices.find(x => x.ID === i.DeviceID);
-                return d && d.Floor === fFloor;
-            });
-        }
-        filtered = filtered.slice(0, limit);
-
-        const excelData = filtered.map(h => {
-            let row = {
-                "วันที่ตรวจ": h.Date,
-                "เวลา": h.Time,
-                "รหัสอุปกรณ์": h.DeviceID,
-                "ประเภท": h.DeviceType,
-                "ผู้ตรวจ": h.Inspector,
-                "สถานะอุปกรณ์": h.Remarks
-            };
-            if (h.DeviceType === 'ถังดับเพลิง' && h.Checklist) {
-                row["แรงดันถัง"] = h.Checklist.c1;
-                row["สลัก"] = h.Checklist.c2;
-                row["คันบีบ"] = h.Checklist.c3;
-                row["สายฉีด"] = h.Checklist.c4;
-                row["สภาพน้ำยา"] = h.Checklist.c5;
-                row["ทำความสะอาด"] = h.Checklist.c6;
-            } else {
-                row["แรงดันถัง"] = "-"; row["สลัก"] = "-"; row["คันบีบ"] = "-";
-                row["สายฉีด"] = "-"; row["สภาพน้ำยา"] = "-"; row["ทำความสะอาด"] = "-";
-            }
-            return row;
-        });
-
-        let ws = XLSX.utils.json_to_sheet(excelData);
-        let wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, "History");
-        XLSX.writeFile(wb, "FireInspection_History.xlsx");
-    }
-
     async function deleteHistory(id) {
         if (await authenticateAction('CanDeleteHistory')) {
             if(confirm("ยืนยันลบรายการประวัตินี้?")) {
                 mockInspections = mockInspections.filter(i => i.ID !== id);
-                saveToLocalStorage(); loadHistory();
+                saveToLocalStorage();
+                loadHistory();
+                Swal.fire('สำเร็จ', 'ลบรายการประวัติแล้ว', 'success');
             }
         }
     }
+
     async function clearHistory() {
-        if (await authenticateAction('CanDeleteHistory') && confirm("ล้างประวัติทั้งหมด?")) {
-            mockInspections = []; saveToLocalStorage(); loadHistory();
+        if (await authenticateAction('CanDeleteHistory')) {
+            if(confirm("คำเตือน: คุณต้องการล้างประวัติการตรวจทั้งหมดใช่หรือไม่?")) {
+                mockInspections = [];
+                saveToLocalStorage();
+                loadHistory();
+                Swal.fire('สำเร็จ', 'ล้างประวัติทั้งหมดแล้ว', 'success');
+            }
         }
+    }
+
+    function viewDeviceStatus(deviceId) {
+        const device = mockDevices.find(d => d.ID === deviceId);
+        if(!device) {
+            Swal.fire('ไม่พบอุปกรณ์', 'รหัสนี้ไม่มีในระบบ', 'error');
+            return;
+        }
+        const currentYear = new Date().getFullYear();
+        const monthNames = ["มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน", "พฤษภาคม", "มิถุนายน", "กรกฎาคม", "สิงหาคม", "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม"];
+        
+        let yearlyRows = '';
+        for(let m = 1; m <= 12; m++) {
+            const insp = mockInspections.find(i => i.DeviceID === device.ID && i.Month === m && i.Year === currentYear);
+            if(insp) {
+                const badgeClass = insp.Remarks === "ใช้งานได้" ? "bg-success" : (insp.Remarks === "ชำรุด" ? "bg-danger" : "bg-warning");
+                yearlyRows += `
+                    <tr>
+                        <td class="fw-bold text-dark">${m} (${monthNames[m-1]})</td>
+                        <td><span class="text-success"><i class="fa-solid fa-check me-1"></i> ตรวจแล้ว</span></td>
+                        <td>${insp.Inspector}</td>
+                        <td>${insp.Date}</td>
+                        <td><span class="badge ${badgeClass} px-2 py-1 rounded-pill">${insp.Remarks}</span></td>
+                    </tr>
+                `;
+            } else {
+                yearlyRows += `
+                    <tr>
+                        <td class="fw-bold text-dark">${m} (${monthNames[m-1]})</td>
+                        <td><span class="text-danger"><i class="fa-solid fa-xmark me-1"></i> ยังไม่ตรวจ</span></td>
+                        <td>-</td>
+                        <td>-</td>
+                        <td>-</td>
+                    </tr>
+                `;
+            }
+        }
+
+        let extraDetailHtml = '';
+        if (device.Type === 'ถังดับเพลิง') {
+            let classBadges = (device.FireClasses || []).map(c => `
+                <span class="badge bg-light text-dark border me-1 align-items-center">
+                    <img src="${fireClassIcons[c]}" style="width:16px; height:16px; margin-right:4px;"> ${c}
+                </span>
+            `).join('') || '-';
+
+            extraDetailHtml = `
+                <div class="col-6"><b>ชนิดถัง:</b> ${device.ChemicalType || '-'}</div>
+                <div class="col-6"><b>ประเภทไฟ:</b> ${classBadges}</div>
+            `;
+        }
+
+        Swal.fire({
+            title: `<i class="fa-solid fa-circle-info me-2 text-primary"></i> ข้อมูลสถานะอุปกรณ์ ${device.ID}`,
+            html: `
+                <div class="text-start fs-6 my-3">
+                    <div class="row g-2 mb-3 bg-light p-3 rounded-3 border">
+                        <div class="col-6"><b>รหัสอุปกรณ์:</b> ${device.ID}</div>
+                        <div class="col-6"><b>ประเภท:</b> ${device.Type}</div>
+                        ${extraDetailHtml}
+                        <div class="col-6"><b>จุดติดตั้ง:</b> ${device.InstallPoint}</div>
+                        <div class="col-6"><b>ชั้น:</b> ${device.Floor}</div>
+                        <div class="col-6"><b>ปีที่สั่งซื้อ:</b> ${device.BuyDate || '-'}</div>
+                        <div class="col-6"><b>อายุการใช้งาน:</b> ${device.Lifespan || '-'} ปี</div>
+                        <div class="col-12 text-danger"><b>หมายเหตุ:</b> ${device.Remark || '-'}</div>
+                    </div>
+                    <h6 class="fw-bold text-success mb-2"><i class="fa-solid fa-calendar-check me-2"></i>ตารางการตรวจรายปี ${currentYear}</h6>
+                    <div class="table-responsive" style="max-height: 250px; overflow-y: auto;">
+                        <table class="table table-sm align-middle text-center small border mb-0">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>เดือน</th>
+                                    <th>สถานะ</th>
+                                    <th>ผู้ตรวจ</th>
+                                    <th>วันที่ตรวจ</th>
+                                    <th>ผลการตรวจ</th>
+                                </tr>
+                            </thead>
+                            <tbody>${yearlyRows}</tbody>
+                        </table>
+                    </div>
+                </div>
+            `,
+            width: '650px',
+            showCloseButton: true,
+            showConfirmButton: false,
+            focusConfirm: false
+        });
+    }
+
+    // ========================================================
+    // 2. STATUS SCANNER LOGIC (หน้าสถานะอุปกรณ์)
+    // ========================================================
+    function resetStatusPage() {
+        document.getElementById('device-info-container').classList.add('d-none');
     }
 
     function startStatusScanner() {
         if(html5StatusScanner) return;
         resetStatusPage();
         html5StatusScanner = new Html5Qrcode("status-reader");
-        html5StatusScanner.start({ facingMode: "environment" }, { fps: 10, qrbox: { width: 220, height: 220 } },
-            (decodedText) => { stopStatusScanner(); viewDeviceStatus(decodedText); }, (err) => {}
-        );
+        html5StatusScanner.start(
+            { facingMode: "environment" },
+            { fps: 10, qrbox: { width: 220, height: 220 } },
+            (decodedText) => {
+                stopStatusScanner();
+                handleStatusScanResult(decodedText);
+            },
+            (err) => {}
+        ).catch(err => {
+            Swal.fire('ข้อผิดพลาดกล้อง', 'ไม่สามารถเปิดกล้องได้ โปรดอนุญาตสิทธิ์กล้องในเบราว์เซอร์', 'warning');
+        });
     }
+
     function stopStatusScanner() {
-        if (html5StatusScanner) html5StatusScanner.stop().then(() => { html5StatusScanner.clear(); html5StatusScanner = null; });
+        if (html5StatusScanner) {
+            html5StatusScanner.stop().then(() => {
+                html5StatusScanner.clear();
+                html5StatusScanner = null;
+            });
+        }
     }
-    function resetStatusPage() { document.getElementById('device-info-container').classList.add('d-none'); }
 
-    function viewDeviceStatus(deviceId) {
-        const d = mockDevices.find(x => x.ID === deviceId);
-        if(!d) return Swal.fire('ไม่พบอุปกรณ์', 'รหัสนี้ไม่มีในระบบ', 'error');
+    function handleStatusScanResult(deviceId) {
+        const device = mockDevices.find(d => d.ID === deviceId);
+        if(!device) {
+            Swal.fire('ไม่พบอุปกรณ์', 'รหัสนี้ไม่มีในระบบ', 'error');
+            return;
+        }
 
-        let isExp = checkDeviceExpired(d.BuyDate);
-        let expBadge = isExp ? `<span class="badge bg-danger ms-2">หมดอายุ</span>` : `<span class="badge bg-success ms-2">ปกติ</span>`;
-        let calculatedAge = d.Lifespan ? d.Lifespan : (d.BuyDate ? (((new Date().getFullYear() + 543) - parseInt(d.BuyDate)) + " ปี") : '-');
+        document.getElementById('device-info-container').classList.remove('d-none');
 
         let extraDetailHtml = '';
-        if (d.Type === 'ถังดับเพลิง') {
-            let classBadges = (d.FireClasses || []).map(c => `<span class="badge bg-light text-dark border me-1"><img src="${fireClassIcons[c]}" style="width:16px; margin-right:4px;">${c}</span>`).join('');
-            
-            let usageHtml = '';
-            if(d.UsageStatus === 'เคยใช้งาน' && d.UsageDates) {
-                usageHtml = `<br><span class="text-danger small">เคยใช้งาน ${d.UsageCount} ครั้ง (${d.UsageDates.join(', ')})</span>`;
-            }
+        if (device.Type === 'ถังดับเพลิง') {
+            let classBadges = (device.FireClasses || []).map(c => `
+                <span class="badge bg-light text-dark border me-1 align-items-center">
+                    <img src="${fireClassIcons[c]}" style="width:16px; height:16px; margin-right:4px;"> ${c}
+                </span>
+            `).join('') || '-';
 
             extraDetailHtml = `
-                <div class="col-6"><b>ชนิดถัง:</b> ${d.ChemicalType || '-'}</div>
-                <div class="col-6"><b>ประเภทไฟ:</b> ${classBadges}</div>
-                <div class="col-12 text-primary"><b>ประวัติการใช้งาน:</b> ${d.UsageStatus || 'ไม่เคยใช้งาน'} ${usageHtml}</div>
+                <div class="col-md-4 mb-2"><span class="text-muted small">ชนิดถังดับเพลิง</span><br><b class="text-dark">${device.ChemicalType || '-'}</b></div>
+                <div class="col-md-4 mb-2"><span class="text-muted small">ประเภทไฟที่ดับได้</span><br>${classBadges}</div>
             `;
         }
-
-        const cYear = new Date().getFullYear();
-        const mNames = ["มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน", "พฤษภาคม", "มิถุนายน", "กรกฎาคม", "สิงหาคม", "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม"];
-        let yearlyRows = '';
+        
+        document.getElementById('device-details').innerHTML = `
+            <div class="col-md-4 mb-2"><span class="text-muted small">รหัสอุปกรณ์</span><br><b class="fs-5 text-dark">${device.ID}</b></div>
+            <div class="col-md-4 mb-2"><span class="text-muted small">ประเภทอุปกรณ์</span><br><b class="text-dark">${device.Type}</b></div>
+            ${extraDetailHtml}
+            <div class="col-md-4 mb-2"><span class="text-muted small">จุดติดตั้ง</span><br><b class="text-dark">${device.InstallPoint} (ชั้น ${device.Floor})</b></div>
+            <div class="col-md-4 mb-2"><span class="text-muted small">ปีที่สั่งซื้อ</span><br><b class="text-dark">${device.BuyDate || '-'}</b></div>
+            <div class="col-md-4 mb-2"><span class="text-muted small">อายุการใช้งาน</span><br><b class="text-dark">${device.Lifespan || '-'} ปี</b></div>
+            <div class="col-md-4 mb-2"><span class="text-muted small">หมายเหตุ</span><br><b class="text-danger">${device.Remark || '-'}</b></div>
+        `;
+        
+        const currentYear = new Date().getFullYear();
+        document.getElementById('current-year-display').innerText = currentYear;
+        
+        const tbody = document.getElementById('yearly-inspection-body');
+        tbody.innerHTML = '';
+        
+        const monthNames = ["มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน", "พฤษภาคม", "มิถุนายน", "กรกฎาคม", "สิงหาคม", "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม"];
         
         for(let m = 1; m <= 12; m++) {
-            const insp = mockInspections.find(i => i.DeviceID === d.ID && i.Month === m && i.Year === cYear);
-            if(insp) {
-                const bClass = insp.Remarks === "ใช้งานได้" ? "bg-success" : "bg-danger";
-                
-                let chkDetails = '';
-                if(insp.Checklist) {
-                    chkDetails = `<div class="text-start mt-1 small bg-light p-1 rounded">
-                        1.แรงดัน:${insp.Checklist.c1} 2.สลัก:${insp.Checklist.c2} 3.คันบีบ:${insp.Checklist.c3} 
-                        4.สายฉีด:${insp.Checklist.c4} 5.น้ำยา:${insp.Checklist.c5} 6.ทำความสะอาด:${insp.Checklist.c6}
-                    </div>`;
-                }
-
-                yearlyRows += `
-                    <tr>
-                        <td class="fw-bold">${m} (${mNames[m-1]})</td>
-                        <td><span class="text-success"><i class="fa-solid fa-check"></i> ตรวจแล้ว</span></td>
-                        <td>${insp.Inspector}</td><td>${insp.Date}</td>
-                        <td><span class="badge ${bClass}">${insp.Remarks}</span>${chkDetails}</td>
-                    </tr>
-                `;
-            } else {
-                yearlyRows += `<tr><td class="fw-bold">${m} (${mNames[m-1]})</td><td><span class="text-danger"><i class="fa-solid fa-xmark"></i> ยังไม่ตรวจ</span></td><td>-</td><td>-</td><td>-</td></tr>`;
-            }
-        }
-
-        Swal.fire({
-            title: `<i class="fa-solid fa-circle-info me-2 text-primary"></i> ข้อมูลสถานะอุปกรณ์`,
-            html: `
-                <div class="text-start fs-6 my-3">
-                    <div class="row g-2 mb-3 bg-light p-3 rounded-3 border">
-                        <div class="col-6"><b>รหัส:</b> ${d.ID}</div><div class="col-6"><b>ประเภท:</b> ${d.Type}</div>
-                        ${extraDetailHtml}
-                        <div class="col-6"><b>ติดตั้ง:</b> ${d.InstallPoint}</div><div class="col-6"><b>ชั้น:</b> ${d.Floor}</div>
-                        <div class="col-6"><b>ปีที่ซื้อ:</b> ${d.BuyDate || '-'}</div><div class="col-6"><b>อายุ:</b> ${calculatedAge}</div>
-                        <div class="col-12 text-danger"><b>หมายเหตุ:</b> ${d.Remark || '-'}</div>
-                    </div>
-                    <h6 class="fw-bold text-success"><i class="fa-solid fa-calendar-check me-2"></i>ตารางการตรวจรายปี ${cYear}</h6>
-                    <div class="table-responsive" style="max-height: 250px; overflow-y: auto;">
-                        <table class="table table-sm align-middle text-center small border mb-0">
-                            <thead class="table-dark"><tr><th>เดือน</th><th>สถานะ</th><th>ผู้ตรวจ</th><th>วันที่ตรวจ</th><th>ผลการตรวจ</th></tr></thead>
-                            <tbody>${yearlyRows}</tbody>
-                        </table>
-                    </div>
-                </div>
-            `,
-            width: '700px', showCloseButton: true, showConfirmButton: false
-        });
-    }
-
-    function loadPublicDeviceList() {
-        const fFloor = document.getElementById('list-filter-floor').value;
-        const fYear = document.getElementById('list-filter-year').value;
-        const fLife = document.getElementById('list-filter-lifespan').value;
-
-        const extBody = document.getElementById('public-extinguisher-body');
-        const fhcBody = document.getElementById('public-fhc-body');
-        extBody.innerHTML = ''; fhcBody.innerHTML = '';
-
-        let filtered = [...mockDevices];
-        if(fFloor !== 'all') filtered = filtered.filter(d => d.Floor === fFloor);
-        if(fYear !== 'all') filtered = filtered.filter(d => d.BuyDate === fYear);
-        if(fLife !== 'all') {
-            filtered = filtered.filter(d => {
-                let isExp = checkDeviceExpired(d.BuyDate);
-                return fLife === 'expired' ? isExp : !isExp;
-            });
-        }
-
-        filtered.forEach(d => {
-            const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${d.ID}`;
-            let calculatedAge = d.Lifespan ? d.Lifespan : (d.BuyDate ? (((new Date().getFullYear() + 543) - parseInt(d.BuyDate)) + " ปี") : '-');
+            const insp = mockInspections.find(i => i.DeviceID === device.ID && i.Month === m && i.Year === currentYear);
             
-            if(d.Type === 'ถังดับเพลิง') {
-                extBody.innerHTML += `
+            if(insp) {
+                const badgeClass = insp.Remarks === "ใช้งานได้" ? "bg-success" : (insp.Remarks === "ชำรุด" ? "bg-danger" : "bg-warning");
+                tbody.innerHTML += `
                     <tr>
-                        <td class="no-print"><img src="${qrUrl}" class="qr-thumb" onclick="previewQR('${d.ID}')"></td>
-                        <td class="fw-bold">${d.ID}</td>
-                        <td>${d.ChemicalType || '-'}</td>
-                        <td>${d.InstallPoint}</td>
-                        <td>${d.Floor}</td>
-                        <td>${d.BuyDate || '-'}</td>
-                        <td>${calculatedAge}</td>
-                        <td class="no-print"><button class="btn btn-action btn-outline-info" onclick="viewDeviceStatus('${d.ID}')"><i class="fa-solid fa-eye"></i></button></td>
+                        <td class="fw-bold text-dark">${m} (${monthNames[m-1]})</td>
+                        <td><span class="text-success"><i class="fa-solid fa-check me-1"></i> ตรวจแล้ว</span></td>
+                        <td>${insp.Inspector}</td>
+                        <td>${insp.Date}</td>
+                        <td><span class="badge ${badgeClass} px-3 py-2 rounded-pill shadow-sm">${insp.Remarks}</span></td>
+                        <td>
+                            <button class="btn btn-action btn-outline-warning" onclick="editInspectionStatus('${device.ID}', ${m}, ${currentYear}, '${insp.ID}')" title="แก้ไขข้อมูล">
+                                <i class="fa-solid fa-pencil"></i>
+                            </button>
+                        </td>
                     </tr>
                 `;
             } else {
-                fhcBody.innerHTML += `
+                tbody.innerHTML += `
                     <tr>
-                        <td class="no-print"><img src="${qrUrl}" class="qr-thumb" onclick="previewQR('${d.ID}')"></td>
-                        <td class="fw-bold">${d.ID}</td>
-                        <td>${d.InstallPoint}</td>
-                        <td>${d.Floor}</td>
-                        <td>${d.BuyDate || '-'}</td>
-                        <td>${calculatedAge}</td>
-                        <td class="no-print"><button class="btn btn-action btn-outline-info" onclick="viewDeviceStatus('${d.ID}')"><i class="fa-solid fa-eye"></i></button></td>
+                        <td class="fw-bold text-dark">${m} (${monthNames[m-1]})</td>
+                        <td><span class="text-danger"><i class="fa-solid fa-xmark me-1"></i> ยังไม่ตรวจ</span></td>
+                        <td>-</td>
+                        <td>-</td>
+                        <td>-</td>
+                        <td>
+                            <button class="btn btn-action btn-outline-warning" onclick="editInspectionStatus('${device.ID}', ${m}, ${currentYear}, null)" title="เพิ่มข้อมูล">
+                                <i class="fa-solid fa-pencil"></i>
+                            </button>
+                        </td>
                     </tr>
                 `;
             }
-        });
+        }
     }
 
-    function exportDeviceListExcel() {
-        const fFloor = document.getElementById('list-filter-floor').value;
-        const fYear = document.getElementById('list-filter-year').value;
-        const fLife = document.getElementById('list-filter-lifespan').value;
-        
-        let filtered = [...mockDevices];
-        if(fFloor !== 'all') filtered = filtered.filter(d => d.Floor === fFloor);
-        if(fYear !== 'all') filtered = filtered.filter(d => d.BuyDate === fYear);
-        if(fLife !== 'all') {
-            filtered = filtered.filter(d => {
-                let isExp = checkDeviceExpired(d.BuyDate);
-                return fLife === 'expired' ? isExp : !isExp;
-            });
-        }
+    async function editInspectionStatus(deviceId, month, year, inspId) {
+        if (await authenticateAction('CanEditStatus')) {
+            const insp = inspId ? mockInspections.find(i => i.ID === inspId) : null;
 
-        let targetType = currentListTab === 'ext' ? 'ถังดับเพลิง' : 'ตู้ Fire Hose';
-        let dataToExport = filtered.filter(d => d.Type === targetType);
-        let sheetName = currentListTab === 'ext' ? 'Extinguishers' : 'FHC';
-
-        const excelData = dataToExport.map(d => {
-            let age = d.Lifespan ? d.Lifespan : (d.BuyDate ? (((new Date().getFullYear() + 543) - parseInt(d.BuyDate)) + " ปี") : '-');
-            let row = {
-                "รหัสอุปกรณ์": d.ID,
-                "ประเภท": d.Type,
-                "จุดติดตั้ง": d.InstallPoint,
-                "ชั้น": d.Floor,
-                "ปีที่สั่งซื้อ": d.BuyDate || "-",
-                "อายุการใช้งาน": age,
-                "หมายเหตุ": d.Remark || "-"
-            };
-            if (d.Type === 'ถังดับเพลิง') {
-                row["ชนิดถัง"] = d.ChemicalType || "-";
-                row["ประเภทไฟ"] = d.FireClasses ? d.FireClasses.join(', ') : "-";
-                row["สถานะการใช้งาน"] = d.UsageStatus || "-";
-                row["ใช้งานกี่ครั้ง"] = d.UsageCount || "-";
-                row["วันที่ใช้งาน"] = d.UsageDates ? d.UsageDates.join(', ') : "-";
+            let currentStatus = insp ? "checked" : "unchecked";
+            let defaultDate = "";
+            if (insp) {
+                let dateParts = insp.Date.split('/');
+                if (dateParts.length === 3) {
+                    defaultDate = `${dateParts[2]}-${dateParts[1].padStart(2, '0')}-${dateParts[0].padStart(2, '0')}`;
+                }
+            } else {
+                defaultDate = new Date().toISOString().split('T')[0];
             }
-            return row;
-        });
 
-        let ws = XLSX.utils.json_to_sheet(excelData);
-        let wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, sheetName);
-        XLSX.writeFile(wb, `Device_List_${sheetName}.xlsx`);
-    }
+            let defaultDeviceStatus = insp ? insp.Remarks : "ใช้งานได้";
+            
+            let empOptions = `<option value="">-- เลือกผู้ตรวจ --</option>`;
+            mockEmployees.forEach(e => {
+                let selected = (insp && insp.Inspector === e.Name) ? "selected" : "";
+                empOptions += `<option value="${e.Name}" ${selected}>${e.Name} (${e.EmpID})</option>`;
+            });
 
-    function toggleExtinguisherFields() {
-        const t = document.getElementById('dev-type').value;
-        document.getElementById('extinguisher-extra-fields').style.display = t === 'ถังดับเพลิง' ? 'block' : 'none';
-        document.getElementById('usage-history-section').style.display = t === 'ถังดับเพลิง' ? 'block' : 'none';
-    }
+            const { value: formValues } = await Swal.fire({
+                title: `จัดการการตรวจเดือนที่ ${month}`,
+                html:
+                    `<div class="text-start mt-3">
+                        <label class="form-label fw-bold">สถานะการตรวจเดือนนี้:</label>
+                        <select id="swal-month-status" class="swal2-select mx-0 w-100 mb-3" style="display: flex;">
+                            <option value="checked" ${currentStatus === 'checked' ? 'selected' : ''}>✅ ตรวจแล้ว</option>
+                            <option value="unchecked" ${currentStatus === 'unchecked' ? 'selected' : ''}>❌ ยังไม่ตรวจ</option>
+                        </select>
 
-    function toggleUsageDetails() {
-        const s = document.getElementById('dev-usage-status').value;
-        document.getElementById('usage-details').style.display = s === 'เคยใช้งาน' ? 'block' : 'none';
-        if(s === 'เคยใช้งาน') generateUsageDates();
-    }
+                        <div id="swal-details-container" style="display: ${currentStatus === 'checked' ? 'block' : 'none'};">
+                            <label class="form-label fw-bold">วันที่ตรวจ:</label>
+                            <input id="swal-insp-date" type="date" class="swal2-input mx-0 w-100 mb-3" value="${defaultDate}">
+                            
+                            <label class="form-label fw-bold">พนักงานผู้ตรวจ:</label>
+                            <select id="swal-insp-emp" class="swal2-select mx-0 w-100 mb-3" style="display: flex;">
+                                ${empOptions}
+                            </select>
 
-    function generateUsageDates(existingDates = []) {
-        const count = parseInt(document.getElementById('dev-usage-count').value) || 1;
-        const container = document.getElementById('usage-dates-container');
-        container.innerHTML = '';
-        for(let i=0; i<count; i++) {
-            let val = existingDates[i] || '';
-            container.innerHTML += `
-                <div class="col-6">
-                    <label class="small text-muted">ครั้งที่ ${i+1}</label>
-                    <input type="date" class="form-control form-control-sm usage-date-input" value="${val}">
-                </div>
-            `;
+                            <label class="form-label fw-bold">สถานะอุปกรณ์:</label>
+                            <select id="swal-insp-status" class="swal2-select mx-0 w-100 mb-3" style="display: flex;">
+                                <option value="ใช้งานได้" ${defaultDeviceStatus === 'ใช้งานได้' ? 'selected' : ''}>✅ ใช้งานได้ (ปกติ)</option>
+                                <option value="ชำรุด" ${defaultDeviceStatus === 'ชำรุด' ? 'selected' : ''}>❌ ชำรุด (ต้องซ่อมแซม/เปลี่ยน)</option>
+                            </select>
+                        </div>
+                    </div>`,
+                didOpen: () => {
+                    const statusSelect = document.getElementById('swal-month-status');
+                    const detailsContainer = document.getElementById('swal-details-container');
+                    statusSelect.addEventListener('change', (e) => {
+                        detailsContainer.style.display = e.target.value === 'checked' ? 'block' : 'none';
+                    });
+                },
+                focusConfirm: false,
+                showCancelButton: true,
+                confirmButtonColor: '#ef4444',
+                confirmButtonText: 'บันทึกข้อมูล',
+                cancelButtonText: 'ยกเลิก',
+                preConfirm: () => {
+                    const monthStatus = document.getElementById('swal-month-status').value;
+                    
+                    if (monthStatus === 'unchecked') {
+                        return { action: 'delete' };
+                    } else {
+                        const newDate = document.getElementById('swal-insp-date').value;
+                        const newInspector = document.getElementById('swal-insp-emp').value;
+                        const newStatus = document.getElementById('swal-insp-status').value;
+                        
+                        if (!newDate) {
+                            Swal.showValidationMessage('กรุณาเลือกวันที่');
+                            return false;
+                        }
+                        if (!newInspector) {
+                            Swal.showValidationMessage('กรุณาเลือกพนักงานผู้ตรวจ');
+                            return false;
+                        }
+                        return { action: 'save', newDate, newInspector, newStatus };
+                    }
+                }
+            });
+
+            if (formValues) {
+                if (formValues.action === 'delete') {
+                    if (inspId) {
+                        mockInspections = mockInspections.filter(i => i.ID !== inspId);
+                        saveToLocalStorage();
+                        Swal.fire('สำเร็จ', 'ลบประวัติของเดือนนี้ออกอัตโนมัติแล้ว', 'success');
+                    }
+                } else if (formValues.action === 'save') {
+                    const d = new Date(formValues.newDate);
+                    const formattedDate = `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth()+1).padStart(2, '0')}/${d.getFullYear()}`;
+                    
+                    let sheetSyncData = null;
+
+                    if (inspId) {
+                        const targetInsp = mockInspections.find(i => i.ID === inspId);
+                        targetInsp.Date = formattedDate;
+                        targetInsp.Inspector = formValues.newInspector;
+                        targetInsp.Remarks = formValues.newStatus;
+                        targetInsp.Month = month; 
+                        targetInsp.Year = year;
+                        
+                        sheetSyncData = {
+                            date: formattedDate,
+                            time: targetInsp.Time || new Date().toLocaleTimeString('th-TH'),
+                            deviceId: deviceId,
+                            type: targetInsp.DeviceType,
+                            inspector: formValues.newInspector,
+                            status: formValues.newStatus
+                        };
+                    } else {
+                        const device = mockDevices.find(d => d.ID === deviceId);
+                        const timeStr = new Date().toLocaleTimeString('th-TH');
+                        mockInspections.push({
+                            ID: "INSP" + new Date().getTime(),
+                            DeviceID: deviceId,
+                            DeviceType: device ? device.Type : "",
+                            Inspector: formValues.newInspector,
+                            Date: formattedDate,
+                            Time: timeStr,
+                            Month: month,
+                            Year: year,
+                            Remarks: formValues.newStatus
+                        });
+
+                        sheetSyncData = {
+                            date: formattedDate,
+                            time: timeStr,
+                            deviceId: deviceId,
+                            type: device ? device.Type : "",
+                            inspector: formValues.newInspector,
+                            status: formValues.newStatus
+                        };
+                    }
+                    saveToLocalStorage();
+
+                    if(sheetSyncData && GOOGLE_SHEET_WEB_APP_URL && GOOGLE_SHEET_WEB_APP_URL !== "YOUR_GOOGLE_APPS_SCRIPT_WEB_APP_URL") {
+                        fetch(GOOGLE_SHEET_WEB_APP_URL, {
+                            method: 'POST',
+                            mode: 'no-cors',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(sheetSyncData)
+                        }).catch(e => console.error(e));
+                    }
+
+                    Swal.fire('สำเร็จ', 'บันทึกข้อมูลการตรวจเรียบร้อยแล้ว', 'success');
+                }
+                
+                handleStatusScanResult(deviceId);
+            }
         }
     }
 
-    function printSpecificQR(id) {
-        const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${id}`;
-        const w = window.open('','_blank');
-        w.document.write(`<html><body><div style="text-align:center;margin-top:50px;"><img src="${qrUrl}"><h2>${id}</h2></div><script>setTimeout(()=>window.print(),500);<\/script></body></html>`);
-        w.document.close();
-    }
-    
-    function downloadSpecificQR(id) {
-        const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${id}`;
-        fetch(qrUrl).then(r=>r.blob()).then(b=>{
-            const a=document.createElement('a'); a.href=URL.createObjectURL(b); a.download=`QR_${id}.png`; a.click();
-        });
+    // ========================================================
+    // SETTINGS: DEVICE MANAGEMENT (จัดการอุปกรณ์)
+    // ========================================================
+    function toggleExtinguisherFields() {
+        const type = document.getElementById('dev-type').value;
+        const extraFields = document.getElementById('extinguisher-extra-fields');
+        if (type === 'ถังดับเพลิง') {
+            extraFields.style.display = 'block';
+        } else {
+            extraFields.style.display = 'none';
+        }
     }
 
     function loadDevices() {
-        const extBody = document.getElementById('extinguisher-table-body');
-        const fhcBody = document.getElementById('fhc-table-body');
-        extBody.innerHTML = ''; fhcBody.innerHTML = '';
+        const extTbody = document.getElementById('extinguisher-table-body');
+        const fhcTbody = document.getElementById('fhc-table-body');
+        if(extTbody) extTbody.innerHTML = '';
+        if(fhcTbody) fhcTbody.innerHTML = '';
 
         mockDevices.forEach(d => {
             const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${d.ID}`;
+            
             const rowHtml = `
                 <tr>
-                    <td><img src="${qrUrl}" class="qr-thumb" onclick="previewQR('${d.ID}')"></td>
-                    <td class="fw-bold">${d.ID}</td><td>${d.InstallPoint}</td><td>${d.Floor}</td>
                     <td>
-                        <div class="d-flex justify-content-center align-items-center gap-1">
-                            <button class="btn btn-action btn-outline-success" onclick="viewDeviceStatus('${d.ID}')" title="ดูข้อมูล"><i class="fa-solid fa-eye"></i></button>
-                            <button class="btn btn-action btn-outline-info" onclick="printSpecificQR('${d.ID}')" title="พิมพ์ QR Code"><i class="fa-solid fa-print"></i></button>
-                            <button class="btn btn-action btn-outline-primary" onclick="downloadSpecificQR('${d.ID}')" title="ดาวน์โหลด QR Code"><i class="fa-solid fa-download"></i></button>
-                            <button class="btn btn-action btn-outline-warning" onclick="openEditDeviceModal('${d.ID}')" title="แก้ไข"><i class="fa-solid fa-pencil"></i></button>
-                            <button class="btn btn-action btn-outline-danger" onclick="deleteDevice('${d.ID}')" title="ลบ"><i class="fa-solid fa-trash"></i></button>
+                        <img src="${qrUrl}" class="qr-thumb" onclick="previewQR('${d.ID}')" title="คลิกเพื่อดูรูปใหญ่">
+                    </td>
+                    <td class="fw-bold">${d.ID}</td>
+                    <td>${d.InstallPoint}</td>
+                    <td>${d.Floor}</td>
+                    <td>
+                        <div class="d-flex justify-content-center align-items-center gap-1 flex-nowrap">
+                            <button class="btn btn-action btn-outline-success" onclick="viewDeviceInfo('${d.ID}')" title="ดูข้อมูลอุปกรณ์">
+                                <i class="fa-solid fa-eye"></i>
+                            </button>
+                            <button class="btn btn-action btn-outline-dark" onclick="printQR('${d.ID}')" title="ปริ้น QR Code">
+                                <i class="fa-solid fa-print"></i>
+                            </button>
+                            <button class="btn btn-action btn-outline-info" onclick="downloadQR('${d.ID}')" title="ดาวน์โหลด QR Code">
+                                <i class="fa-solid fa-download"></i>
+                            </button>
+                            <button class="btn btn-action btn-outline-warning" onclick="openEditDeviceModal('${d.ID}')" title="แก้ไข">
+                                <i class="fa-solid fa-pencil"></i>
+                            </button>
+                            <button class="btn btn-action btn-outline-danger" onclick="deleteDevice('${d.ID}')" title="ลบ">
+                                <i class="fa-solid fa-trash"></i>
+                            </button>
                         </div>
                     </td>
-                </tr>`;
-            if (d.Type === 'ถังดับเพลิง') extBody.innerHTML += rowHtml; else fhcBody.innerHTML += rowHtml;
+                </tr>
+            `;
+            
+            // แยกข้อมูลตาราง
+            if (d.Type === 'ถังดับเพลิง') {
+                if(extTbody) extTbody.innerHTML += rowHtml;
+            } else {
+                if(fhcTbody) fhcTbody.innerHTML += rowHtml;
+            }
         });
     }
 
-    function openAddDeviceModal(type) {
+    function viewDeviceInfo(id) {
+        const d = mockDevices.find(x => x.ID === id);
+        if(!d) return;
+
+        let extraHtml = '';
+        if (d.Type === 'ถังดับเพลิง') {
+            let classBadges = (d.FireClasses || []).map(c => `
+                <span class="badge bg-light text-dark border me-1 align-items-center">
+                    <img src="${fireClassIcons[c]}" style="width:16px; height:16px; margin-right:4px;"> ${c}
+                </span>
+            `).join('') || '-';
+
+            extraHtml = `
+                <p class="mb-2"><b>ชนิดถังดับเพลิง:</b> ${d.ChemicalType || '-'}</p>
+                <p class="mb-2"><b>ประเภทไฟที่ดับได้:</b> ${classBadges}</p>
+            `;
+        }
+
+        Swal.fire({
+            title: `<i class="fa-solid fa-circle-info me-2 text-primary"></i> ข้อมูลอุปกรณ์ ${d.ID}`,
+            html: `
+                <div class="text-start fs-6 my-3 bg-light p-3 rounded-3 border">
+                    <p class="mb-2"><b>รหัสอุปกรณ์:</b> ${d.ID}</p>
+                    <p class="mb-2"><b>ประเภท:</b> ${d.Type}</p>
+                    ${extraHtml}
+                    <p class="mb-2"><b>จุดติดตั้ง:</b> ${d.InstallPoint}</p>
+                    <p class="mb-2"><b>ชั้น:</b> ${d.Floor}</p>
+                    <p class="mb-2"><b>ปีที่สั่งซื้อ:</b> ${d.BuyDate || '-'}</p>
+                    <p class="mb-2"><b>อายุการใช้งาน:</b> ${d.Lifespan || '-'} ปี</p>
+                    <p class="text-danger mb-0"><b>หมายเหตุ:</b> ${d.Remark || '-'}</p>
+                </div>
+            `,
+            showCloseButton: true,
+            showConfirmButton: false
+        });
+    }
+
+    function previewQR(id) {
+        const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${id}`;
+        Swal.fire({
+            title: `QR Code : ${id}`,
+            html: `<img src="${qrUrl}" class="img-fluid rounded border p-2 my-2"><br>`,
+            showConfirmButton: true,
+            confirmButtonText: '<i class="fa-solid fa-print me-1"></i> สั่งพิมพ์',
+            confirmButtonColor: '#1e293b',
+            showCancelButton: true,
+            cancelButtonText: '<i class="fa-solid fa-download me-1"></i> ดาวน์โหลด',
+            cancelButtonColor: '#0dcaf0',
+            showCloseButton: true
+        }).then((res) => {
+            if(res.isConfirmed) {
+                printQR(id);
+            } else if(res.dismiss === Swal.DismissReason.cancel) {
+                downloadQR(id);
+            }
+        });
+    }
+
+    function printQR(id) {
+        const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${id}`;
+        const w = window.open('', '_blank');
+        w.document.write(`
+            <html>
+                <head><title>Print QR - ${id}</title></head>
+                <body style="display:flex; flex-direction:column; align-items:center; justify-content:center; height:100vh; font-family:sans-serif;">
+                    <img src="${qrUrl}" style="width:200px; height:200px;">
+                    <h2 style="margin-top:10px;">${id}</h2>
+                    <script>setTimeout(() => { window.print(); window.close(); }, 500);<\/script>
+                </body>
+            </html>
+        `);
+        w.document.close();
+    }
+
+    async function downloadQR(id) {
+        try {
+            const url = `https://api.qrserver.com/v1/create-qr-code/?size=500x500&data=${id}`;
+            const response = await fetch(url);
+            const blob = await response.blob();
+            const blobUrl = window.URL.createObjectURL(blob);
+            
+            const a = document.createElement('a');
+            a.style.display = 'none';
+            a.href = blobUrl;
+            a.download = `QR_${id}.png`;
+            document.body.appendChild(a);
+            a.click();
+            
+            window.URL.revokeObjectURL(blobUrl);
+            document.body.removeChild(a);
+            
+            Swal.fire({
+                icon: 'success',
+                title: 'ดาวน์โหลดสำเร็จ',
+                text: `บันทึกภาพ QR Code รหัส ${id} เรียบร้อยแล้ว`,
+                timer: 1500,
+                showConfirmButton: false
+            });
+        } catch (error) {
+            Swal.fire('ข้อผิดพลาด', 'ไม่สามารถดาวน์โหลดภาพ QR Code ได้', 'error');
+        }
+    }
+
+    function openAddDeviceModal(defaultType) {
+        const devType = defaultType || "ถังดับเพลิง";
         document.getElementById('deviceModalTitle').innerText = "เพิ่มอุปกรณ์ใหม่";
         document.getElementById('edit-dev-original-id').value = "";
-        document.getElementById('dev-type').value = type;
-        document.getElementById('dev-type').disabled = true;
-        document.getElementById('dev-id').value = type === 'ถังดับเพลิง' ? 'CL-' : 'FHC-';
+        
+        const typeSelect = document.getElementById('dev-type');
+        typeSelect.value = devType;
+        typeSelect.disabled = true; // ล็อคประเภทอุปกรณ์
+
+        document.getElementById('dev-id').value = (devType === 'ถังดับเพลิง') ? 'CL-' : 'FHC-';
         document.getElementById('dev-point').value = "";
         document.getElementById('dev-floor').value = "";
         document.getElementById('dev-buydate').value = "";
         document.getElementById('dev-lifespan').value = "";
         document.getElementById('dev-remark').value = "";
-        
+
         document.getElementById('dev-chemical-type').value = "";
-        ['a','b','c','d','k'].forEach(c => document.getElementById(`class-${c}`).checked = false);
-        
-        document.getElementById('dev-usage-status').value = "ไม่เคยใช้งาน";
+        ['a', 'b', 'c', 'd', 'k'].forEach(c => {
+            document.getElementById(`class-${c}`).checked = false;
+        });
+
         toggleExtinguisherFields();
-        toggleUsageDetails();
-        
         new bootstrap.Modal(document.getElementById('deviceModal')).show();
     }
 
     function openEditDeviceModal(id) {
         const d = mockDevices.find(x => x.ID === id);
         if(!d) return;
+
         document.getElementById('deviceModalTitle').innerText = "แก้ไขข้อมูลอุปกรณ์";
         document.getElementById('edit-dev-original-id').value = d.ID;
-        document.getElementById('dev-type').value = d.Type;
         document.getElementById('dev-id').value = d.ID;
+        
+        const typeSelect = document.getElementById('dev-type');
+        typeSelect.value = d.Type;
+        typeSelect.disabled = true; // ล็อคประเภทอุปกรณ์ขณะแก้ไข
+
         document.getElementById('dev-point').value = d.InstallPoint;
         document.getElementById('dev-floor').value = d.Floor;
         document.getElementById('dev-buydate').value = d.BuyDate || "";
-        
-        if(d.Lifespan) {
-            document.getElementById('dev-lifespan').value = d.Lifespan;
-        } else if(d.BuyDate) {
-            let age = (new Date().getFullYear() + 543) - parseInt(d.BuyDate);
-            document.getElementById('dev-lifespan').value = age + " ปี";
-        } else {
-            document.getElementById('dev-lifespan').value = "";
-        }
-        
+        document.getElementById('dev-lifespan').value = d.Lifespan || "";
         document.getElementById('dev-remark').value = d.Remark || "";
-        
-        if(d.Type === 'ถังดับเพลิง') {
-            document.getElementById('dev-chemical-type').value = d.ChemicalType || "";
-            const fc = d.FireClasses || [];
-            ['a','b','c','d','k'].forEach(c => document.getElementById(`class-${c}`).checked = fc.includes(c.toUpperCase()));
-            
-            document.getElementById('dev-usage-status').value = d.UsageStatus || "ไม่เคยใช้งาน";
-            if(d.UsageStatus === 'เคยใช้งาน') {
-                document.getElementById('dev-usage-count').value = d.UsageCount || 1;
-                toggleUsageDetails();
-                generateUsageDates(d.UsageDates || []);
-            } else {
-                toggleUsageDetails();
-            }
-        }
+
+        document.getElementById('dev-chemical-type').value = d.ChemicalType || "";
+
+        const fireClasses = d.FireClasses || [];
+        ['a', 'b', 'c', 'd', 'k'].forEach(c => {
+            document.getElementById(`class-${c}`).checked = fireClasses.includes(c.toUpperCase());
+        });
+
         toggleExtinguisherFields();
         new bootstrap.Modal(document.getElementById('deviceModal')).show();
     }
@@ -1692,131 +1866,233 @@
         const id = document.getElementById('dev-id').value.trim();
         const type = document.getElementById('dev-type').value;
         const point = document.getElementById('dev-point').value.trim();
-        
-        let deviceData = {
-            ID: id, Type: type, InstallPoint: point,
-            Floor: document.getElementById('dev-floor').value.trim(),
-            BuyDate: document.getElementById('dev-buydate').value,
-            Lifespan: document.getElementById('dev-lifespan').value.trim(),
-            Remark: document.getElementById('dev-remark').value.trim()
-        };
+        const floor = document.getElementById('dev-floor').value.trim();
+        const buyDate = document.getElementById('dev-buydate').value;
+        const lifespan = document.getElementById('dev-lifespan').value;
+        const remark = document.getElementById('dev-remark').value.trim();
 
-        if(type === 'ถังดับเพลิง') {
-            deviceData.ChemicalType = document.getElementById('dev-chemical-type').value;
-            let fc = [];
-            ['a','b','c','d','k'].forEach(c => { if(document.getElementById(`class-${c}`).checked) fc.push(c.toUpperCase()); });
-            deviceData.FireClasses = fc;
-            
-            let us = document.getElementById('dev-usage-status').value;
-            deviceData.UsageStatus = us;
-            if(us === 'เคยใช้งาน') {
-                deviceData.UsageCount = document.getElementById('dev-usage-count').value;
-                let dates = [];
-                document.querySelectorAll('.usage-date-input').forEach(i => dates.push(i.value));
-                deviceData.UsageDates = dates;
+        const chemicalType = document.getElementById('dev-chemical-type').value;
+        const fireClasses = [];
+        ['a', 'b', 'c', 'd', 'k'].forEach(c => {
+            if (document.getElementById(`class-${c}`).checked) {
+                fireClasses.push(c.toUpperCase());
             }
-        }
+        });
+
+        if(!id || id === 'CL-' || id === 'FHC-') return Swal.fire('เตือน', 'กรุณาระบุรหัสอุปกรณ์ให้ครบถ้วน', 'warning');
+
+        const deviceData = {
+            ID: id,
+            Type: type,
+            InstallPoint: point,
+            Floor: floor,
+            BuyDate: buyDate,
+            Lifespan: lifespan,
+            Remark: remark,
+            ChemicalType: (type === 'ถังดับเพลิง') ? chemicalType : '',
+            FireClasses: (type === 'ถังดับเพลิง') ? fireClasses : []
+        };
 
         if(origId) {
             const idx = mockDevices.findIndex(x => x.ID === origId);
-            if(idx !== -1) mockDevices[idx] = deviceData;
+            if(idx !== -1) {
+                mockDevices[idx] = deviceData;
+            }
         } else {
-            if(mockDevices.some(x => x.ID === id)) return Swal.fire('เตือน', 'รหัสนี่ซ้ำ', 'warning');
+            if(mockDevices.some(x => x.ID === id)) {
+                return Swal.fire('เตือน', 'รหัสอุปกรณ์นี้มีอยู่ในระบบแล้ว', 'warning');
+            }
             mockDevices.push(deviceData);
         }
 
         saveToLocalStorage();
         bootstrap.Modal.getInstance(document.getElementById('deviceModal')).hide();
-        loadDevices(); loadPublicDeviceList();
-        Swal.fire('สำเร็จ', 'บันทึกเรียบร้อย', 'success');
+        loadDevices();
+        Swal.fire('สำเร็จ', 'บันทึกข้อมูลอุปกรณ์เรียบร้อย', 'success');
     }
 
     function deleteDevice(id) {
-        if(confirm("ลบอุปกรณ์อย่างถาวร?")) {
-            mockDevices = mockDevices.filter(x => x.ID !== id);
-            saveToLocalStorage(); loadDevices(); loadPublicDeviceList();
-        }
-    }
-
-    function previewQR(id) {
-        const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${id}`;
         Swal.fire({
-            title: `QR Code : ${id}`,
-            html: `<img src="${qrUrl}" class="img-fluid rounded border p-2 my-2"><br>`,
-            showConfirmButton: true, confirmButtonText: '<i class="fa-solid fa-print"></i> พิมพ์',
-            showCancelButton: true, cancelButtonText: '<i class="fa-solid fa-download"></i> โหลด'
+            title: `ลบอุปกรณ์ ${id}?`,
+            text: "ข้อมูลอุปกรณ์จะถูกลบออกจากระบบอย่างถาวร",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#ef4444',
+            confirmButtonText: 'ยืนยันลบ',
+            cancelButtonText: 'ยกเลิก'
         }).then((res) => {
             if(res.isConfirmed) {
-                printSpecificQR(id);
-            } else if(res.dismiss === Swal.DismissReason.cancel) {
-                downloadSpecificQR(id);
+                mockDevices = mockDevices.filter(x => x.ID !== id);
+                saveToLocalStorage();
+                loadDevices();
+                Swal.fire('ลบแล้ว', 'ลบอุปกรณ์เรียบร้อยแล้ว', 'success');
             }
         });
     }
 
+    // ========================================================
+    // SETTINGS: USER MANAGEMENT
+    // ========================================================
     function loadUsers() {
-        const tbody = document.getElementById('user-table-body'); tbody.innerHTML = '';
-        mockUsers.forEach(u => tbody.innerHTML += `<tr><td>${u.ID}</td><td>${u.Username}</td><td>${u.Name}</td><td>${u.Position}</td><td>${u.Phone||'-'}</td><td>${u.Role}</td><td><button class="btn btn-sm btn-outline-warning" onclick="openEditUserModal('${u.ID}')"><i class="fa-solid fa-pencil"></i></button> <button class="btn btn-sm btn-outline-danger" onclick="deleteUser('${u.ID}')"><i class="fa-solid fa-trash"></i></button></td></tr>`);
+        const tbody = document.getElementById('user-table-body');
+        tbody.innerHTML = '';
+
+        mockUsers.forEach(u => {
+            tbody.innerHTML += `
+                <tr>
+                    <td>${u.ID}</td>
+                    <td class="fw-bold">${u.Username}</td>
+                    <td>${u.Name}</td>
+                    <td>${u.Position}</td>
+                    <td>${u.Phone || '-'}</td>
+                    <td><span class="badge ${u.Role === 'admin' ? 'bg-danger':'bg-secondary'} px-2 py-1 rounded-pill">${u.Role}</span></td>
+                    <td>
+                        <div class="d-flex justify-content-center gap-1">
+                            <button class="btn btn-action btn-outline-info" onclick="viewUserInfo('${u.ID}')" title="ดูข้อมูลผู้ใช้"><i class="fa-solid fa-eye"></i></button>
+                            <button class="btn btn-action btn-outline-warning" onclick="openEditUserModal('${u.ID}')"><i class="fa-solid fa-pencil"></i></button>
+                            <button class="btn btn-action btn-outline-danger" onclick="deleteUser('${u.ID}')"><i class="fa-solid fa-trash"></i></button>
+                        </div>
+                    </td>
+                </tr>
+            `;
+        });
     }
-    
-    function openAddUserModal() { document.getElementById('edit-user-original-id').value = ""; new bootstrap.Modal(document.getElementById('userModal')).show(); }
-    
-    function openEditUserModal(id) { const u = mockUsers.find(x => x.ID===id); document.getElementById('edit-user-original-id').value = u.ID; document.getElementById('user-username').value = u.Username; document.getElementById('user-password').value = u.Password; document.getElementById('user-fullname').value = u.Name; document.getElementById('user-role').value = u.Role; new bootstrap.Modal(document.getElementById('userModal')).show(); }
-    
+
+    function viewUserInfo(id) {
+        const u = mockUsers.find(x => x.ID === id);
+        if(!u) return;
+
+        Swal.fire({
+            title: `<i class="fa-solid fa-user me-2 text-primary"></i> ข้อมูลผู้ใช้งาน`,
+            html: `
+                <div class="text-start fs-6 my-3 bg-light p-3 rounded-3 border">
+                    <p class="mb-2"><b>ID:</b> ${u.ID}</p>
+                    <p class="mb-2"><b>Username:</b> ${u.Username}</p>
+                    <p class="mb-2"><b>ชื่อ-นามสกุล:</b> ${u.Name}</p>
+                    <p class="mb-2"><b>ตำแหน่ง:</b> ${u.Position}</p>
+                    <p class="mb-2"><b>เบอร์โทรศัพท์:</b> ${u.Phone || '-'}</p>
+                    <p class="mb-2"><b>สิทธิ์การใช้งาน:</b> <span class="badge ${u.Role === 'admin' ? 'bg-danger':'bg-secondary'} px-2 py-1 rounded-pill">${u.Role}</span></p>
+                    <hr>
+                    <p class="mb-1 text-muted small fw-bold">กำหนดสิทธิ์:</p>
+                    <p class="mb-1 text-sm"><i class="fa-solid ${u.CanDeleteHistory ? 'fa-circle-check text-success':'fa-circle-xmark text-secondary'} me-1"></i> ลบ/ล้างประวัติการตรวจ</p>
+                    <p class="mb-0 text-sm"><i class="fa-solid ${u.CanEditStatus ? 'fa-circle-check text-success':'fa-circle-xmark text-secondary'} me-1"></i> แก้ไขผล/สถานะ/วันที่การตรวจ</p>
+                </div>
+            `,
+            showCloseButton: true,
+            showConfirmButton: false
+        });
+    }
+
+    function openAddUserModal() {
+        document.getElementById('userModalTitle').innerText = "เพิ่มผู้ใช้งาน";
+        document.getElementById('edit-user-original-id').value = "";
+        document.getElementById('user-username').value = "";
+        document.getElementById('user-password').value = "";
+        document.getElementById('user-fullname').value = "";
+        document.getElementById('user-phone').value = "";
+        document.getElementById('user-position').value = "";
+        document.getElementById('user-role').value = "user";
+        document.getElementById('user-perm-delete').checked = false;
+        document.getElementById('user-perm-edit').checked = false;
+        new bootstrap.Modal(document.getElementById('userModal')).show();
+    }
+
+    function openEditUserModal(id) {
+        const u = mockUsers.find(x => x.ID === id);
+        if(!u) return;
+
+        document.getElementById('userModalTitle').innerText = "แก้ไขผู้ใช้งาน";
+        document.getElementById('edit-user-original-id').value = u.ID;
+        document.getElementById('user-username').value = u.Username;
+        document.getElementById('user-password').value = u.Password;
+        document.getElementById('user-fullname').value = u.Name;
+        document.getElementById('user-phone').value = u.Phone || "";
+        document.getElementById('user-position').value = u.Position;
+        document.getElementById('user-role').value = u.Role;
+        document.getElementById('user-perm-delete').checked = u.CanDeleteHistory || false;
+        document.getElementById('user-perm-edit').checked = u.CanEditStatus || false;
+
+        new bootstrap.Modal(document.getElementById('userModal')).show();
+    }
+
     function saveUser() {
         const origId = document.getElementById('edit-user-original-id').value;
-        const u = { ID: origId || "U"+Date.now(), Username: document.getElementById('user-username').value, Password: document.getElementById('user-password').value, Name: document.getElementById('user-fullname').value, Role: document.getElementById('user-role').value, CanDeleteHistory: document.getElementById('user-perm-delete').checked, CanEditStatus: document.getElementById('user-perm-edit').checked };
-        if(origId) mockUsers[mockUsers.findIndex(x=>x.ID===origId)] = u; else mockUsers.push(u);
-        saveToLocalStorage(); bootstrap.Modal.getInstance(document.getElementById('userModal')).hide(); loadUsers();
+        const uname = document.getElementById('user-username').value.trim();
+        const pass = document.getElementById('user-password').value.trim();
+        const fname = document.getElementById('user-fullname').value.trim();
+        const phone = document.getElementById('user-phone').value.trim();
+        const pos = document.getElementById('user-position').value.trim();
+        const role = document.getElementById('user-role').value;
+        const canDel = document.getElementById('user-perm-delete').checked;
+        const canEdit = document.getElementById('user-perm-edit').checked;
+
+        if(!uname) return Swal.fire('เตือน', 'กรุณาระบุ Username', 'warning');
+
+        if(origId) {
+            const idx = mockUsers.findIndex(x => x.ID === origId);
+            if(idx !== -1) {
+                // ป้องกันการเปลี่ยนรหัสผ่าน Admin เริ่มต้น
+                if (mockUsers[idx].Username === "admin") {
+                    mockUsers[idx].Password = "20033457";
+                    mockUsers[idx].Role = "admin";
+                } else {
+                    mockUsers[idx].Password = pass;
+                    mockUsers[idx].Role = role;
+                }
+                mockUsers[idx].Username = uname;
+                mockUsers[idx].Name = fname;
+                mockUsers[idx].Phone = phone;
+                mockUsers[idx].Position = pos;
+                mockUsers[idx].CanDeleteHistory = canDel;
+                mockUsers[idx].CanEditStatus = canEdit;
+            }
+        } else {
+            const newId = "U00" + (mockUsers.length + 1);
+            mockUsers.push({ ID: newId, Username: uname, Password: pass, Role: role, Name: fname, Position: pos, Phone: phone || "-", CanDeleteHistory: canDel, CanEditStatus: canEdit });
+        }
+
+        saveToLocalStorage();
+        bootstrap.Modal.getInstance(document.getElementById('userModal')).hide();
+        loadUsers();
+        Swal.fire('สำเร็จ', 'บันทึกผู้ใช้เรียบร้อย', 'success');
     }
-    
-    function deleteUser(id) { 
-        if(confirm('ยืนยันลบผู้ใช้งาน?')) {
+
+    function deleteUser(id) {
+        const user = mockUsers.find(x => x.ID === id);
+        if(user && user.Username === "admin") {
+            return Swal.fire('ไม่อนุญาต', 'ไม่สามารถลบผู้ดูแลระบบหลักได้', 'error');
+        }
+
+        if(confirm("ต้องการลบผู้ใช้นี้ใช่หรือไม่?")) {
             mockUsers = mockUsers.filter(x => x.ID !== id);
-            saveToLocalStorage(); 
+            saveToLocalStorage();
             loadUsers();
         }
     }
 
-    // ฟังก์ชันจัดการพนักงาน ที่เพิ่มเติมให้สมบูรณ์
+    // ========================================================
+    // SETTINGS: EMPLOYEE MANAGEMENT (ฐานข้อมูลพนักงาน)
+    // ========================================================
     function loadEmployees() {
         const tbody = document.getElementById('employee-table-body');
         tbody.innerHTML = '';
         mockEmployees.forEach(e => {
             tbody.innerHTML += `
-            <tr>
-                <td>${e.EmpID}</td>
-                <td>${e.Name}</td>
-                <td>${e.Position}</td>
-                <td>
-                    <button class="btn btn-sm btn-outline-info" onclick="viewEmployee('${e.EmpID}')" title="ดูข้อมูล"><i class="fa-solid fa-eye"></i></button>
-                    <button class="btn btn-sm btn-outline-warning" onclick="openEditEmployeeModal('${e.EmpID}')" title="แก้ไข"><i class="fa-solid fa-pencil"></i></button>
-                    <button class="btn btn-sm btn-outline-danger" onclick="deleteEmployee('${e.EmpID}')" title="ลบ"><i class="fa-solid fa-trash"></i></button>
-                </td>
-            </tr>`;
+                <tr>
+                    <td class="fw-bold text-primary">${e.EmpID}</td>
+                    <td>${e.Name}</td>
+                    <td>${e.Position}</td>
+                    <td>
+                        <button class="btn btn-action btn-outline-warning" onclick="openEditEmployeeModal('${e.EmpID}')" title="แก้ไข"><i class="fa-solid fa-pencil"></i></button>
+                        <button class="btn btn-action btn-outline-danger" onclick="deleteEmployee('${e.EmpID}')" title="ลบ"><i class="fa-solid fa-trash"></i></button>
+                    </td>
+                </tr>
+            `;
         });
     }
 
-    function viewEmployee(empId) {
-        const e = mockEmployees.find(x => x.EmpID === empId);
-        if(e) {
-            Swal.fire({
-                title: '<i class="fa-solid fa-id-badge text-primary me-2"></i>ข้อมูลพนักงาน',
-                html: `
-                    <div class="text-start mt-3">
-                        <p><b>รหัสพนักงาน:</b> ${e.EmpID}</p>
-                        <p><b>ชื่อ-นามสกุล:</b> ${e.Name}</p>
-                        <p><b>ตำแหน่ง:</b> ${e.Position}</p>
-                    </div>
-                `,
-                icon: 'info',
-                confirmButtonText: 'ปิด',
-                confirmButtonColor: '#3085d6'
-            });
-        }
-    }
-
     function openAddEmployeeModal() {
+        document.getElementById('employeeModalTitle').innerText = "เพิ่มพนักงาน";
         document.getElementById('edit-emp-original-id').value = "";
         document.getElementById('emp-id').value = "";
         document.getElementById('emp-name').value = "";
@@ -1824,53 +2100,81 @@
         new bootstrap.Modal(document.getElementById('employeeModal')).show();
     }
 
-    function openEditEmployeeModal(empId) {
-        const e = mockEmployees.find(x => x.EmpID === empId);
-        if(e) {
-            document.getElementById('edit-emp-original-id').value = e.EmpID;
-            document.getElementById('emp-id').value = e.EmpID;
-            document.getElementById('emp-name').value = e.Name;
-            document.getElementById('emp-position').value = e.Position;
-            new bootstrap.Modal(document.getElementById('employeeModal')).show();
-        }
+    function openEditEmployeeModal(id) {
+        const e = mockEmployees.find(x => x.EmpID === id);
+        if(!e) return;
+        document.getElementById('employeeModalTitle').innerText = "แก้ไขข้อมูลพนักงาน";
+        document.getElementById('edit-emp-original-id').value = e.EmpID;
+        document.getElementById('emp-id').value = e.EmpID;
+        document.getElementById('emp-name').value = e.Name;
+        document.getElementById('emp-position').value = e.Position;
+        new bootstrap.Modal(document.getElementById('employeeModal')).show();
     }
 
     function saveEmployee() {
         const origId = document.getElementById('edit-emp-original-id').value;
-        const empData = {
-            EmpID: document.getElementById('emp-id').value.trim(),
-            Name: document.getElementById('emp-name').value.trim(),
-            Position: document.getElementById('emp-position').value.trim()
-        };
-        
-        if(!empData.EmpID || !empData.Name) {
-            return Swal.fire('เตือน', 'กรุณากรอกข้อมูลให้ครบ', 'warning');
-        }
+        const id = document.getElementById('emp-id').value.trim();
+        const name = document.getElementById('emp-name').value.trim();
+        const pos = document.getElementById('emp-position').value.trim();
+
+        if(!id || !name) return Swal.fire('เตือน', 'กรุณาระบุรหัสและชื่อพนักงานให้ครบถ้วน', 'warning');
+
+        const empData = { EmpID: id, Name: name, Position: pos };
 
         if(origId) {
             const idx = mockEmployees.findIndex(x => x.EmpID === origId);
             if(idx !== -1) mockEmployees[idx] = empData;
         } else {
-            if(mockEmployees.some(x => x.EmpID === empData.EmpID)) {
-                return Swal.fire('เตือน', 'รหัสพนักงานนี้มีในระบบแล้ว', 'warning');
-            }
+            if(mockEmployees.some(x => x.EmpID === id)) return Swal.fire('เตือน', 'รหัสพนักงานนี้มีอยู่แล้ว', 'warning');
             mockEmployees.push(empData);
         }
-        
         saveToLocalStorage();
         bootstrap.Modal.getInstance(document.getElementById('employeeModal')).hide();
         loadEmployees();
         Swal.fire('สำเร็จ', 'บันทึกข้อมูลพนักงานเรียบร้อย', 'success');
     }
 
-    function deleteEmployee(empId) {
-        if(confirm("ยืนยันลบพนักงาน?")) {
-            mockEmployees = mockEmployees.filter(x => x.EmpID !== empId);
-            saveToLocalStorage(); 
+    function deleteEmployee(id) {
+        if(confirm(`ต้องการลบรหัสพนักงาน ${id} ใช่หรือไม่?`)) {
+            mockEmployees = mockEmployees.filter(x => x.EmpID !== id);
+            saveToLocalStorage();
             loadEmployees();
         }
     }
 
+    // เริ่มต้นแอป
+    window.onload = function() {
+        showPage('scan-page');
+        loadFromFirebase(); // เรียกข้อมูลจาก Firebase เมื่อโหลดหน้าเว็บ
+
+        // ตั้งค่าดวงตารหัสผ่าน (กดเพื่อดู ปล่อยเม้าเพื่อปิดอัตโนมัติ)
+        const btnEye = document.getElementById('btn-eye-password');
+        const passInput = document.getElementById('login-password');
+        const eyeIcon = document.getElementById('eye-icon');
+
+        const showPass = () => {
+            passInput.type = 'text';
+            eyeIcon.classList.replace('fa-eye', 'fa-eye-slash');
+        };
+        const hidePass = () => {
+            passInput.type = 'password';
+            eyeIcon.classList.replace('fa-eye-slash', 'fa-eye');
+        };
+
+        btnEye.addEventListener('mousedown', showPass);
+        btnEye.addEventListener('mouseup', hidePass);
+        btnEye.addEventListener('mouseleave', hidePass);
+        
+        btnEye.addEventListener('touchstart', (e) => { e.preventDefault(); showPass(); });
+        btnEye.addEventListener('touchend', (e) => { e.preventDefault(); hidePass(); });
+    };
+
+    window.addEventListener('beforeunload', function () {
+        // ให้เคลียร์การล็อกอินเมื่อปิดเบราว์เซอร์
+        logout();
+    });
 </script>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
