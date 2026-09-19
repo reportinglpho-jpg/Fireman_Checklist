@@ -598,6 +598,8 @@
                                     <th>รหัสถัง</th>
                                     <th>จุดติดตั้ง</th>
                                     <th>ชั้น</th>
+                                    <th>ปีที่สั่งซื้อ</th>
+                                    <th>อายุ (ปี)</th>
                                     <th style="width: 260px;">จัดการ</th>
                                 </tr>
                             </thead>
@@ -623,6 +625,8 @@
                                     <th>รหัสตู้</th>
                                     <th>จุดติดตั้ง</th>
                                     <th>ชั้น</th>
+                                    <th>ปีที่สั่งซื้อ</th>
+                                    <th>อายุ (ปี)</th>
                                     <th style="width: 260px;">จัดการ</th>
                                 </tr>
                             </thead>
@@ -1807,10 +1811,22 @@
 
         mockDevices.forEach(d => {
             const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${d.ID}`;
+            
+            // แปลงปีที่สั่งซื้อให้เป็น ค.ศ. เสมอ (ถ้าระบบเดิมเก็บเป็น พ.ศ. ที่เกิน 2400 ระบบจะลบ 543 ให้อัตโนมัติ)
+            let adYear = d.BuyDate ? (parseInt(d.BuyDate) > 2400 ? parseInt(d.BuyDate) - 543 : parseInt(d.BuyDate)) : null;
+            
+            // คำนวณอายุการใช้งานโดยใช้ปี ค.ศ. ปัจจุบัน
+            let calculatedAge = adYear ? (new Date().getFullYear() - adYear) : '-';
+            let buyDateDisplay = adYear || '-';
+
             const rowHtml = `
                 <tr>
                     <td><img src="${qrUrl}" class="qr-thumb" onclick="previewQR('${d.ID}')"></td>
-                    <td class="fw-bold">${d.ID}</td><td>${d.InstallPoint}</td><td>${d.Floor}</td>
+                    <td class="fw-bold">${d.ID}</td>
+                    <td>${d.InstallPoint}</td>
+                    <td>${d.Floor}</td>
+                    <td>${buyDateDisplay}</td>
+                    <td>${calculatedAge}</td>
                     <td>
                         <div class="d-flex justify-content-center align-items-center gap-1">
                             <button class="btn btn-action btn-outline-success" onclick="viewDeviceStatus('${d.ID}')" title="ดูข้อมูล"><i class="fa-solid fa-eye"></i></button>
