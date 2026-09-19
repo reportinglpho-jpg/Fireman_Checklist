@@ -820,12 +820,13 @@
                     <div class="col-md-6 mb-3">
                         <label class="form-label small fw-semibold">ปีที่สั่งซื้อ</label>
                         <select id="dev-buydate" class="form-select rounded-3" onchange="autoFillLifespan()">
-                            <option value="">-- เลือกปี พ.ศ. --</option>
-                            <script>
-                                for(let y=2555; y<=2575; y++){
-                                    document.write(`<option value="${y}">${y}</option>`);
-                                }
-                            </script>
+                            <option value="">-- เลือกปี ค.ศ. --</option>
+                          <script>
+                            /* เปลี่ยนช่วงปีจาก 2555-2575 เป็น 2012-2032 หรือตามที่ต้องการ */
+                          for(let y=2012; y<=2032; y++){
+        document.write(`<option value="${y}">${y}</option>`);
+    }
+</script>
                         </select>
                     </div>
                     <div class="col-md-6 mb-3">
@@ -993,14 +994,14 @@
     function checkDeviceExpired(buyDateStr) {
         if(!buyDateStr) return false;
         let buyYearPS = parseInt(buyDateStr);
-        let age = (new Date().getFullYear() + 543) - buyYearPS;
+        let age = new Date().getFullYear() - buyYearPS;
         return age >= 5; 
     }
 
     function autoFillLifespan() {
         let y = document.getElementById('dev-buydate').value;
         if(y) {
-            let age = (new Date().getFullYear() + 543) - parseInt(y);
+            let age = new Date().getFullYear() - parseInt(y);
             document.getElementById('dev-lifespan').value = age;
         } else {
             document.getElementById('dev-lifespan').value = "";
@@ -1400,7 +1401,7 @@
         if(!d) return Swal.fire('ไม่พบอุปกรณ์', 'รหัสนี้ไม่มีในระบบ', 'error');
 
         // แก้ไขข้อ 5: เอาป้ายเตือน "หมดอายุ" สีแดงออกจากหน้าประวัติ/สถานะอุปกรณ์ออกไปเลย
-        let calculatedAge = d.BuyDate ? ((new Date().getFullYear() + 543) - parseInt(d.BuyDate)) : '-';
+        let calculatedAge = d.BuyDate ? (new Date().getFullYear() - parseInt(d.BuyDate)) : '-';
 
         let extraDetailHtml = '';
         if (d.Type === 'ถังดับเพลิง') {
@@ -1666,7 +1667,7 @@
 
         filtered.forEach(d => {
             const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${d.ID}`;
-            let calculatedAge = d.BuyDate ? ((new Date().getFullYear() + 543) - parseInt(d.BuyDate)) : '-';
+            let calculatedAge = d.BuyDate ? (new Date().getFullYear() - parseInt(d.BuyDate)) : '-';
             
             if(d.Type === 'ถังดับเพลิง') {
                 extBody.innerHTML += `
@@ -1813,8 +1814,7 @@
             const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${d.ID}`;
             
             // แปลงปีที่สั่งซื้อให้เป็น ค.ศ. เสมอ (ถ้าระบบเดิมเก็บเป็น พ.ศ. ที่เกิน 2400 ระบบจะลบ 543 ให้อัตโนมัติ)
-            let adYear = d.BuyDate ? (parseInt(d.BuyDate) > 2400 ? parseInt(d.BuyDate) - 543 : parseInt(d.BuyDate)) : null;
-            
+            let adYear = d.BuyDate ? parseInt(d.BuyDate) : null;
             // คำนวณอายุการใช้งานโดยใช้ปี ค.ศ. ปัจจุบัน
             let calculatedAge = adYear ? (new Date().getFullYear() - adYear) : '-';
             let buyDateDisplay = adYear || '-';
