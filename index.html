@@ -1148,26 +1148,6 @@
         showPage('scan-page');
     }
 
-    // ฟังก์ชันสำหรับตรวจสอบและขอสิทธิ์เข้าถึงกล้องก่อนเริ่มสแกน
-async function requestCameraPermission() {
-    try {
-        // บังคับขอสิทธิ์เข้าถึงกล้องจากอุปกรณ์ (สำคัญมากสำหรับแอป .APK)
-        const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-        
-        // เมื่อได้รับสิทธิ์แล้ว ให้หยุดสตรีมไปก่อนเพื่อไม่ให้กล้องค้าง 
-        // แล้วปล่อยให้ไลบรารี html5-qrcode จัดการต่อ
-        stream.getTracks().forEach(track => track.stop());
-        
-        // เรียกฟังก์ชันเปิดกล้องสแกนของคุณตรงนี้ (เปลี่ยนชื่อฟังก์ชันให้ตรงกับที่คุณมี)
-        startMyQrScanner(); 
-        
-    } catch (err) {
-        console.error("Camera permission denied:", err);
-        // แจ้งเตือนผู้ใช้เมื่อไม่อนุญาตสิทธิ์
-        alert("ไม่สามารถเปิดกล้องได้: กรุณาไปที่ 'การตั้งค่า' ของมือถือ และอนุญาตให้แอปนี้เข้าถึงกล้องถ่ายรูปเพื่อใช้งานการสแกน");
-    }
-}
-
     function startScanner() {
         if(html5QrcodeScanner) return;
         html5QrcodeScanner = new Html5Qrcode("reader");
