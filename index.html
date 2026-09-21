@@ -1209,6 +1209,43 @@
                     </div>
                 </div>
             `;
+        } else if (device.Type === 'ตู้ Fire Hose') {
+            checklistHtml = `
+                <div class="text-start mt-3 p-3 border rounded bg-light" style="font-size:0.9rem;">
+                    <p class="fw-bold mb-2 text-primary"><i class="fa-solid fa-list-check me-1"></i> หัวข้อการตรวจตู้ FHC</p>
+                    <div class="mb-2 border-bottom pb-1">
+                        <label class="d-block text-muted">1. Hose Reel</label>
+                        <input type="radio" name="chk1" id="chk1_1" value="ใช้งานได้" checked> ใช้งานได้ &nbsp;
+                        <input type="radio" name="chk1" id="chk1_2" value="ใช้งานไม่ได้(ชำรุด)"> ใช้งานไม่ได้(ชำรุด)
+                    </div>
+                    <div class="mb-2 border-bottom pb-1">
+                        <label class="d-block text-muted">2. ถังดับเพลิง</label>
+                        <input type="radio" name="chk2" id="chk2_1" value="มี" checked> มี &nbsp;
+                        <input type="radio" name="chk2" id="chk2_2" value="ไม่มี"> ไม่มี
+                    </div>
+                    <div class="mb-2 border-bottom pb-1">
+                        <label class="d-block text-muted">3. สายดับเพลิง</label>
+                        <input type="radio" name="chk3" id="chk3_1" value="สาย 1.5 นิ้ว" checked> สาย 1.5 นิ้ว &nbsp;
+                        <input type="radio" name="chk3" id="chk3_2" value="สาย 2.5 นิ้ว"> สาย 2.5 นิ้ว &nbsp;
+                        <input type="radio" name="chk3" id="chk3_3" value="ไม่มี"> ไม่มี
+                    </div>
+                    <div class="mb-2 border-bottom pb-1">
+                        <label class="d-block text-muted">4. กระจกตู้ดับเพลิง</label>
+                        <input type="radio" name="chk4" id="chk4_1" value="มี" checked> มี &nbsp;
+                        <input type="radio" name="chk4" id="chk4_2" value="ไม่มี(ชำรุด)"> ไม่มี(ชำรุด)
+                    </div>
+                    <div class="mb-2 border-bottom pb-1">
+                        <label class="d-block text-muted">5. กุญแจตัว F</label>
+                        <input type="radio" name="chk5" id="chk5_1" value="มี" checked> มี &nbsp;
+                        <input type="radio" name="chk5" id="chk5_2" value="ไม่มี"> ไม่มี
+                    </div>
+                    <div class="mb-1">
+                        <label class="d-block text-muted">6. ความสะอาดตู้</label>
+                        <input type="radio" name="chk6" id="chk6_1" value="ทำแล้ว" checked> ทำแล้ว &nbsp;
+                        <input type="radio" name="chk6" id="chk6_2" value="ยังไม่ได้ทำ"> ยังไม่ได้ทำ
+                    </div>
+                </div>
+            `;
         }
 
         Swal.fire({
@@ -1242,7 +1279,7 @@
                 if (!employee) { Swal.showValidationMessage('ไม่พบรหัสพนักงานนี้'); return false; }
                 
                 let checkData = null;
-                if(device.Type === 'ถังดับเพลิง') {
+                if(device.Type === 'ถังดับเพลิง' || device.Type === 'ตู้ Fire Hose') {
                     checkData = {
                         c1: document.querySelector('input[name="chk1"]:checked').value,
                         c2: document.querySelector('input[name="chk2"]:checked').value,
@@ -1349,16 +1386,55 @@
                 "ผู้ตรวจ": h.Inspector,
                 "สถานะอุปกรณ์": h.Remarks
             };
-            if (h.DeviceType === 'ถังดับเพลิง' && h.Checklist) {
-                row["แรงดันถัง"] = h.Checklist.c1;
-                row["สลัก"] = h.Checklist.c2;
-                row["คันบีบ"] = h.Checklist.c3;
-                row["สายฉีด"] = h.Checklist.c4;
-                row["สภาพน้ำยา"] = h.Checklist.c5;
-                row["ทำความสะอาด"] = h.Checklist.c6;
-            } else {
-                row["แรงดันถัง"] = "-"; row["สลัก"] = "-"; row["คันบีบ"] = "-";
-                row["สายฉีด"] = "-"; row["สภาพน้ำยา"] = "-"; row["ทำความสะอาด"] = "-";
+
+            // เมื่อถูกกรองเป็น "ตู้ Fire Hose"
+            if (fType === 'ตู้ Fire Hose') {
+                if (h.DeviceType === 'ตู้ Fire Hose' && h.Checklist) {
+                    row["Hose Reel"] = h.Checklist.c1;
+                    row["ถังดับเพลิง"] = h.Checklist.c2;
+                    row["สายดับเพลิง"] = h.Checklist.c3;
+                    row["กระจกตู้ดับเพลิง"] = h.Checklist.c4;
+                    row["กุญแจตัว F"] = h.Checklist.c5;
+                    row["ความสะอาดตู้"] = h.Checklist.c6;
+                } else {
+                    row["Hose Reel"] = "-"; row["ถังดับเพลิง"] = "-"; row["สายดับเพลิง"] = "-";
+                    row["กระจกตู้ดับเพลิง"] = "-"; row["กุญแจตัว F"] = "-"; row["ความสะอาดตู้"] = "-";
+                }
+            } 
+            // เมื่อถูกกรองเป็น "ถังดับเพลิง"
+            else if (fType === 'ถังดับเพลิง') {
+                if (h.DeviceType === 'ถังดับเพลิง' && h.Checklist) {
+                    row["แรงดันถัง"] = h.Checklist.c1;
+                    row["สลัก"] = h.Checklist.c2;
+                    row["คันบีบ"] = h.Checklist.c3;
+                    row["สายฉีด"] = h.Checklist.c4;
+                    row["สภาพน้ำยา"] = h.Checklist.c5;
+                    row["ทำความสะอาด"] = h.Checklist.c6;
+                } else {
+                    row["แรงดันถัง"] = "-"; row["สลัก"] = "-"; row["คันบีบ"] = "-";
+                    row["สายฉีด"] = "-"; row["สภาพน้ำยา"] = "-"; row["ทำความสะอาด"] = "-";
+                }
+            } 
+            // กรณีเลือก "ทุกประเภท" จะแสดงแบบรวมคอลัมน์
+            else {
+                if (h.DeviceType === 'ถังดับเพลิง' && h.Checklist) {
+                    row["แรงดัน / Hose Reel"] = h.Checklist.c1;
+                    row["สลัก / ถังดับเพลิง"] = h.Checklist.c2;
+                    row["คันบีบ / สายดับเพลิง"] = h.Checklist.c3;
+                    row["สายฉีด / กระจกตู้"] = h.Checklist.c4;
+                    row["สภาพน้ำยา / กุญแจ F"] = h.Checklist.c5;
+                    row["ความสะอาด"] = h.Checklist.c6;
+                } else if (h.DeviceType === 'ตู้ Fire Hose' && h.Checklist) {
+                    row["แรงดัน / Hose Reel"] = h.Checklist.c1;
+                    row["สลัก / ถังดับเพลิง"] = h.Checklist.c2;
+                    row["คันบีบ / สายดับเพลิง"] = h.Checklist.c3;
+                    row["สายฉีด / กระจกตู้"] = h.Checklist.c4;
+                    row["สภาพน้ำยา / กุญแจ F"] = h.Checklist.c5;
+                    row["ความสะอาด"] = h.Checklist.c6;
+                } else {
+                    row["แรงดัน / Hose Reel"] = "-"; row["สลัก / ถังดับเพลิง"] = "-"; row["คันบีบ / สายดับเพลิง"] = "-";
+                    row["สายฉีด / กระจกตู้"] = "-"; row["สภาพน้ำยา / กุญแจ F"] = "-"; row["ความสะอาด"] = "-";
+                }
             }
             return row;
         });
@@ -1430,10 +1506,17 @@
                 
                 let chkDetails = '';
                 if(insp.Checklist) {
-                    chkDetails = `<div class="text-start mt-1 small bg-light p-1 rounded">
-                        1.แรงดัน:${insp.Checklist.c1} 2.สลัก:${insp.Checklist.c2} 3.คันบีบ:${insp.Checklist.c3} 
-                        4.สายฉีด:${insp.Checklist.c4} 5.น้ำยา:${insp.Checklist.c5} 6.ทำความสะอาด:${insp.Checklist.c6}
-                    </div>`;
+                    if (d.Type === 'ถังดับเพลิง') {
+                        chkDetails = `<div class="text-start mt-1 small bg-light p-1 rounded">
+                            1.แรงดัน: ${insp.Checklist.c1} | 2.สลัก: ${insp.Checklist.c2} | 3.คันบีบ: ${insp.Checklist.c3}<br>
+                            4.สายฉีด: ${insp.Checklist.c4} | 5.น้ำยา: ${insp.Checklist.c5} | 6.ทำความสะอาด: ${insp.Checklist.c6}
+                        </div>`;
+                    } else if (d.Type === 'ตู้ Fire Hose') {
+                        chkDetails = `<div class="text-start mt-1 small bg-light p-1 rounded">
+                            1.Hose: ${insp.Checklist.c1} | 2.ถัง: ${insp.Checklist.c2} | 3.สาย: ${insp.Checklist.c3}<br>
+                            4.กระจก: ${insp.Checklist.c4} | 5.กุญแจ F: ${insp.Checklist.c5} | 6.ทำความสะอาด: ${insp.Checklist.c6}
+                        </div>`;
+                    }
                 }
 
                 yearlyRows += `
@@ -1597,7 +1680,7 @@
                     if (!employee) { Swal.showValidationMessage('ไม่พบรหัสพนักงานนี้ในระบบ'); return false; }
                     
                     let checkData = null;
-                    if(device.Type === 'ถังดับเพลิง') {
+                    if(device.Type === 'ถังดับเพลิง' || device.Type === 'ตู้ Fire Hose') {
                         checkData = {
                             c1: document.querySelector('input[name="chk1_bd"]:checked').value,
                             c2: document.querySelector('input[name="chk2_bd"]:checked').value,
