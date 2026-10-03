@@ -404,6 +404,11 @@
                         <i class="fa-solid fa-file-excel me-1"></i> Excel
                     </button>
 
+                    <!-- เพิ่มปุ่มนี้เข้าไป -->
+                    <button class="btn btn-primary btn-sm rounded-3 px-3 shadow-sm" onclick="syncAllToGoogleSheet()">
+                        <i class="fa-solid fa-cloud-arrow-up me-1"></i> ซิงค์เข้า Sheet
+                    </button>
+
                     <button id="btn-clear-history" class="btn btn-outline-danger btn-sm rounded-3 px-3" onclick="clearHistory()">
                         <i class="fa-solid fa-trash me-1"></i> ล้างประวัติ
                     </button>
@@ -1185,19 +1190,38 @@
     // วาง URL ที่คัดลอกมาจากขั้นตอนที่ 3 ลงในเครื่องหมายคำพูดด้านล่าง
 const GOOGLE_SHEET_URL = "https://script.google.com/macros/s/AKfycbyY1-vg9PjLVYdvnhE55AwQvFnxAMNUo5KcbRgM4Z4-7lhfx6WLZgYC3VLHwvMQFBRJ1g/exec";
 
-function backupToGoogleSheet(inspectionData) {
+function backupToGoogleSheet(dataPayload) {
     fetch(GOOGLE_SHEET_URL, {
         method: 'POST',
-        mode: 'no-cors', // ป้องกันปัญหา Cross-Origin (CORS)
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(inspectionData)
-    }).then(() => {
-        console.log("บันทึกข้อมูลลง Google Sheet สำเร็จ");
-    }).catch(error => {
-        console.error("ไม่สามารถบันทึกลง Google Sheet ได้:", error);
+        // เปลี่ยนมาใช้ text/plain เพื่อป้องกันการบล็อกจากบราวเซอร์ (CORS) ในการยิง API ข้ามโดเมน
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' }, 
+        body: JSON.stringify(dataPayload)
+    }).then(res => {
+        console.log("ส่งข้อมูล Google Sheet สำเร็จ");
+    }).catch(err => {
+        console.error("ไม่สามารถส่งข้อมูล Google Sheet ได้:", err);
     });
+}
+
+// ฟังก์ชันใหม่สำหรับปุ่ม "ซิงค์ข้อมูลทั้งหมด" (นำข้อมูลเก่าทั้งหมดไปเข้า Google Sheet)
+function syncAllToGoogleSheet() {
+    if (mockInspections.length === 0) {
+        Swal.fire('แจ้งเตือน', 'ไม่มีข้อมูลประวัติในระบบ', 'warning');
+        return;
+    }
+    Swal.fire({
+        title: 'กำลังส่งข้อมูล...',
+        text: 'นำข้อมูลประวัติทั้งหมดไปสำรองที่ Google Sheet',
+        allowOutsideClick: false,
+        didOpen: () => { Swal.showLoading(); }
+    });
+    
+    // ส่งข้อมูล Array ทั้งหมดไปที่ Apps Script
+    backupToGoogleSheet(mockInspections); 
+    
+    setTimeout(() => {
+        Swal.fire('สำเร็จ', 'ซิงค์ข้อมูลเก่าทั้งหมดไปยัง Google Sheet แล้ว', 'success');
+    }, 2000);
 }
 
     function handleScanResult(deviceId) {
@@ -1721,6 +1745,9 @@ backupToGoogleSheet(newInsp);
             if (newStatus) {
                 mockInspections[inspIndex].Remarks = newStatus;
                 saveToLocalStorage();
+                // --- เพิ่มบรรทัดนี้ลงไป เพื่ออัปเดตข้อมูลใหม่ไปทับแถวเดิมใน Google Sheet ---
+                backupToGoogleSheet(mockInspections[inspIndex]);
+                // -----------------------------------------------------------
                 if(document.getElementById('history-page').classList.contains('active')) loadHistory();
                 Swal.fire({icon: 'success', title: 'แก้ไขสำเร็จ', timer: 1500, showConfirmButton: false});
                 setTimeout(() => { viewDeviceStatus(deviceId); }, 1500);
