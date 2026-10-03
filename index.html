@@ -1182,6 +1182,24 @@
         if (html5QrcodeScanner) { html5QrcodeScanner.stop().then(() => { html5QrcodeScanner.clear(); html5QrcodeScanner = null; }); }
     }
 
+    // วาง URL ที่คัดลอกมาจากขั้นตอนที่ 3 ลงในเครื่องหมายคำพูดด้านล่าง
+const GOOGLE_SHEET_URL = "https://script.google.com/macros/s/AKfycbyY1-vg9PjLVYdvnhE55AwQvFnxAMNUo5KcbRgM4Z4-7lhfx6WLZgYC3VLHwvMQFBRJ1g/exec";
+
+function backupToGoogleSheet(inspectionData) {
+    fetch(GOOGLE_SHEET_URL, {
+        method: 'POST',
+        mode: 'no-cors', // ป้องกันปัญหา Cross-Origin (CORS)
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(inspectionData)
+    }).then(() => {
+        console.log("บันทึกข้อมูลลง Google Sheet สำเร็จ");
+    }).catch(error => {
+        console.error("ไม่สามารถบันทึกลง Google Sheet ได้:", error);
+    });
+}
+
     function handleScanResult(deviceId) {
         const device = mockDevices.find(d => d.ID === deviceId);
         if(!device) return Swal.fire('ข้อผิดพลาด', 'ไม่พบอุปกรณ์นี้ในระบบ', 'error');
@@ -1319,6 +1337,8 @@
                 };
                 mockInspections.push(newInsp);
                 saveToLocalStorage();
+                // เพิ่มโค้ดบรรทัดนี้ลงไป เพื่อส่งข้อมูลไปสำรองที่ Google Sheet
+backupToGoogleSheet(newInsp);
                 Swal.fire({icon: 'success', title: 'บันทึกสำเร็จ!', timer: 2000});
             }
         });
