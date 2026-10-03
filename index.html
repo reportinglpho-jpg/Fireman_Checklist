@@ -336,15 +336,29 @@
         </div>
     </div>
 
-    <!-- ================= PAGE 2: HISTORY (ประวัติการตรวจ) ================= -->
+   <!-- ================= PAGE 2: HISTORY (ประวัติการตรวจ) ================= -->
     <div id="history-page" class="page">
+        <!-- บล็อกอุปกรณ์ที่ยังไม่ได้ตรวจเช็ค -->
         <div class="custom-card p-4 mb-4 border-start border-4 border-warning no-print">
-            <div class="d-flex align-items-center justify-content-between mb-2">
+            <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between mb-3 gap-2">
                 <h5 class="fw-bold text-warning-emphasis m-0">
-                    <i class="fa-solid fa-triangle-exclamation me-2"></i> อุปกรณ์ที่ยังไม่ได้ตรวจเช็คประจำเดือนนี้
+                    <i class="fa-solid fa-triangle-exclamation me-2"></i> อุปกรณ์ที่ยังไม่ได้ตรวจประจำเดือนนี้
                 </h5>
+                <!-- 1. เพิ่มตัวกรองข้อมูล ดูตามประเภท / ดูตามชั้น -->
+                <div class="d-flex gap-2 flex-wrap">
+                    <select id="unscanned-filter-type" class="form-select form-select-sm w-auto rounded-3 shadow-sm" onchange="renderUnscannedList()">
+                        <option value="all">ดูทุกประเภท</option>
+                        <option value="ถังดับเพลิง">เฉพาะถังดับเพลิง</option>
+                        <option value="ตู้ Fire Hose">เฉพาะตู้ FHC</option>
+                    </select>
+                    <select id="unscanned-filter-floor" class="form-select form-select-sm w-auto rounded-3 shadow-sm" onchange="renderUnscannedList()">
+                        <option value="all">ดูทุกชั้น</option>
+                        <!-- Options จะถูก Generate อัตโนมัติด้วย JS -->
+                    </select>
+                </div>
             </div>
-            <ul id="unscanned-list" class="list-group list-group-flush mt-2"></ul>
+            <!-- กำหนดความสูงเพื่อให้สามารถ Scroll ได้หากข้อมูลมีเยอะ -->
+            <ul id="unscanned-list" class="list-group list-group-flush mt-2" style="max-height: 250px; overflow-y: auto;"></ul>
         </div>
 
         <div class="custom-card p-4">
@@ -1310,25 +1324,111 @@
         });
     }
 
+    // ฟังก์ชันคำนวณน้ำหนักของชั้น เพื่อใช้ในการจัดเรียง (B, G, 1, 2, 3...)
+    function getFloorWeight(floorStr) {
+        if (!floorStr) return 999;
+        const f = floorStr.toString().trim().toUpperCase();
+        if (f === 'B' || f === 'B1') return -2;
+        if (f === 'G') return -1;
+        if (f === 'M') return 0;
+        const num = parseInt(f);
+        return isNaN(num) ? 999 : num; // หากเป็นตัวเลขก็คืนค่าตามตัวเลข
+    }
+
+    // ฟังก์ชันเรนเดอร์และจัดเรียงข้อมูลที่ยังไม่ได้ตรวจ
+    function renderUnscannedList() {
+        const currentMonth = new Date().getMonth() + 1;
+        const currentYear = new Date().getFullYear();
+        
+        // หารายการที่ตรวจไปแล้ว
+        const inspectedIds = mockInspections.filter(i => i.Month === currentMonth && i.Year === currentYear).map(i => i.DeviceID);
+        
+        // ดึงอุปกรณ์ที่ยังไม่ถูกตรวจ
+        let unscanned = mockDevices.filter(d => !inspectedIds.includes(d.ID));
+
+        // ดึงค่าจากตัวกรอง (Filter)
+        const fType = document.getElementById('unscanned-filter-type')?.value || 'all';
+        const fFloor = document.getElementById('unscanned-filter-floor')?.value || 'all';
+
+        // 1. อัปเดต Dropdown เลือกชั้นแบบอัตโนมัติ (อิงจากข้อมูลอุปกรณ์ที่ยังไม่ตรวจ)
+        let floors = new Set(unscanned.map(d => d.Floor).filter(f => f));
+        let floorSelect = document.getElementById('unscanned-filter-floor');
+        if(floorSelect) {
+            let currentFloorVal = floorSelect.value;
+            let floorOptions = `<option value="all">ดูทุกชั้น</option>`;
+            [...floors].sort((a, b) => getFloorWeight(a) - getFloorWeight(b)).forEach(f => {
+                floorOptions += `<option value="${f}" ${currentFloorVal === f ? 'selected' : ''}>ชั้น ${f}</option>`;
+            });
+            floorSelect.innerHTML = floorOptions;
+        }
+
+        // 2. กรองข้อมูลตาม Dropdown ที่เลือก
+        if (fType !== 'all') unscanned = unscanned.filter(u => u.Type === fType);
+        if (fFloor !== 'all' && fFloor !== '') unscanned = unscanned.filter(u => u.Floor === fFloor);
+
+        // 3. จัดเรียงข้อมูลตามเงื่อนไข (ถังดับเพลิงขึ้นก่อน -> ตู้ FHC -> เรียงตามชั้น -> เรียงตาม ID)
+        unscanned.sort((a, b) => {
+            // ถังดับเพลิงขึ้นก่อนตู้ FHC เสมอ
+            if (a.Type === 'ถังดับเพลิง' && b.Type !== 'ถังดับเพลิง') return -1;
+            if (a.Type !== 'ถังดับเพลิง' && b.Type === 'ถังดับเพลิง') return 1;
+
+            // ถ้าเป็นถังดับเพลิงเหมือนกัน ให้เรียงตามรหัส (CL-001 -> CL-002)
+            if (a.Type === 'ถังดับเพลิง' && b.Type === 'ถังดับเพลิง') {
+                return a.ID.localeCompare(b.ID, undefined, { numeric: true, sensitivity: 'base' });
+            }
+
+            // ถ้าเป็นตู้ FHC เหมือนกัน ให้เรียงตามชั้น (B, G, 1, 2, 3...)
+            if (a.Type === 'ตู้ Fire Hose' && b.Type === 'ตู้ Fire Hose') {
+                let weightA = getFloorWeight(a.Floor);
+                let weightB = getFloorWeight(b.Floor);
+                
+                if (weightA !== weightB) {
+                    return weightA - weightB; // เรียงชั้นจากล่างขึ้นบน (B, G, 1, 2)
+                }
+                // ถ้าชั้นเดียวกัน ให้เรียงตามรหัส (FHC-001 -> FHC-002)
+                return a.ID.localeCompare(b.ID, undefined, { numeric: true, sensitivity: 'base' });
+            }
+            return 0;
+        });
+
+        // 4. แสดงผลออกหน้าจอ HTML
+        const unscannedUl = document.getElementById('unscanned-list');
+        if (unscannedUl) {
+            unscannedUl.innerHTML = '';
+            const totalUnscanned = mockDevices.filter(d => !inspectedIds.includes(d.ID)).length;
+            
+            if (totalUnscanned === 0 && mockDevices.length > 0) {
+                unscannedUl.innerHTML = `<li class="list-group-item text-success border-0 text-center"><i class="fa-solid fa-circle-check fs-4 mb-2"></i><br>สุดยอด! ตรวจครบทุกอุปกรณ์แล้วประจำเดือนนี้</li>`;
+            } else if (unscanned.length === 0) {
+                unscannedUl.innerHTML = `<li class="list-group-item text-muted border-0 text-center py-3">ไม่พบอุปกรณ์ที่ตรงกับเงื่อนไขการค้นหา</li>`;
+            } else {
+                unscanned.forEach(u => {
+                    let icon = u.Type === 'ถังดับเพลิง' ? '<i class="fa-solid fa-fire-extinguisher text-danger"></i>' : '<i class="fa-solid fa-droplet text-primary"></i>';
+                    unscannedUl.innerHTML += `
+                        <li class="list-group-item border-0 p-2 border-bottom d-flex align-items-center">
+                            <div style="width: 25px; text-align: center;">${icon}</div>
+                            <div class="ms-2">
+                                <b class="text-dark">${u.ID}</b> 
+                                <span class="text-muted small ms-1">(${u.Type})</span><br>
+                                <span class="text-muted small">
+                                    <i class="fa-solid fa-location-dot me-1"></i> ชั้น ${u.Floor} | จุดติดตั้ง: ${u.InstallPoint}
+                                </span>
+                            </div>
+                        </li>
+                    `;
+                });
+            }
+        }
+    }
+
     function loadHistory() {
         const limit = parseInt(document.getElementById('limit-select').value);
         const fType = document.getElementById('hist-filter-type').value;
         const fMonth = document.getElementById('hist-filter-month').value;
         const fFloor = document.getElementById('hist-filter-floor').value;
 
-        const currentMonth = new Date().getMonth() + 1;
-        const currentYear = new Date().getFullYear();
-        const inspectedIds = mockInspections.filter(i => i.Month === currentMonth && i.Year === currentYear).map(i => i.DeviceID);
-        const unscanned = mockDevices.filter(d => !inspectedIds.includes(d.ID));
-        const unscannedUl = document.getElementById('unscanned-list');
-        if(unscannedUl) {
-            unscannedUl.innerHTML = '';
-            if (unscanned.length === 0 && mockDevices.length > 0) {
-                unscannedUl.innerHTML = `<li class="list-group-item text-success border-0"><i class="fa-solid fa-circle-check"></i> ตรวจครบแล้ว</li>`;
-            } else {
-                unscanned.forEach(u => unscannedUl.innerHTML += `<li class="list-group-item border-0 text-danger p-1"><i class="fa-solid fa-circle-dot"></i> ${u.ID} (${u.Type}) - จุดติดตั้ง: ${u.InstallPoint} ชั้น ${u.Floor}</li>`);
-            }
-        }
+        // ===== เรียกใช้งานฟังก์ชัน Unscanned List ที่เพิ่งสร้างใหม่ =====
+        renderUnscannedList();
 
         const tbody = document.getElementById('history-table-body');
         tbody.innerHTML = '';
